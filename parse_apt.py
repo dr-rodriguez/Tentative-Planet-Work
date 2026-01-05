@@ -14,6 +14,236 @@ def safe_find_text(element, tag):
     return None
 
 
+def parse_targets(root, proposal_id):
+    """
+    Parse Targets section from APT XML.
+    
+    Args:
+        root: Root element of the XML tree
+        proposal_id: Proposal ID string
+        
+    Returns:
+        List of dictionaries containing target information
+    """
+    targets = []
+    targets_node = root.find(f"{NS}Targets")
+    
+    if targets_node is None:
+        return targets
+    
+    for target_element in targets_node.findall(f"{NS}Target"):
+        target_dict = {
+            "ProposalID": proposal_id,
+            "Number": safe_find_text(target_element, f"{NS}Number"),
+            "TargetName": safe_find_text(target_element, f"{NS}TargetName"),
+            "TargetArchiveName": safe_find_text(target_element, f"{NS}TargetArchiveName"),
+            "TargetID": safe_find_text(target_element, f"{NS}TargetID"),
+            "Comments": safe_find_text(target_element, f"{NS}Comments"),
+            "RAProperMotion": safe_find_text(target_element, f"{NS}RAProperMotion"),
+            "DecProperMotion": safe_find_text(target_element, f"{NS}DecProperMotion"),
+            "RAProperMotionUnits": safe_find_text(target_element, f"{NS}RAProperMotionUnits"),
+            "DecProperMotionUnits": safe_find_text(target_element, f"{NS}DecProperMotionUnits"),
+            "Epoch": safe_find_text(target_element, f"{NS}Epoch"),
+            "AnnualParallax": safe_find_text(target_element, f"{NS}AnnualParallax"),
+            "Extended": safe_find_text(target_element, f"{NS}Extended"),
+            "Category": safe_find_text(target_element, f"{NS}Category"),
+            "Keywords": safe_find_text(target_element, f"{NS}Keywords"),
+            "EquatorialCoordinates": None,
+            "BackgroundTargetReq": safe_find_text(target_element, f"{NS}BackgroundTargetReq"),
+            "TargetConfirmationRun": safe_find_text(target_element, f"{NS}TargetConfirmationRun")
+        }
+        
+        # Extract EquatorialCoordinates Value attribute
+        eq_coords = target_element.find(f"{NS}EquatorialCoordinates")
+        if eq_coords is not None:
+            target_dict["EquatorialCoordinates"] = eq_coords.get("Value")
+        
+        targets.append(target_dict)
+    
+    return targets
+
+
+def parse_data_requests(root, proposal_id):
+    """
+    Parse DataRequests section from APT XML.
+    
+    Args:
+        root: Root element of the XML tree
+        proposal_id: Proposal ID string
+        
+    Returns:
+        List of dictionaries containing observation information
+    """
+    observations = []
+    data_requests_node = root.find(f"{NS}DataRequests")
+    
+    if data_requests_node is None:
+        return observations
+    
+    for obs_group in data_requests_node.findall(f"{NS}ObservationGroup"):
+        dr_label = safe_find_text(obs_group, f"{NS}Label")
+        if dr_label is None:
+            dr_label = "NONE"
+        
+        for observation in obs_group.findall(f"{NS}Observation"):
+            obs_number = safe_find_text(observation, f"{NS}Number")
+            obs_target = safe_find_text(observation, f"{NS}TargetID")
+            obs_label2 = safe_find_text(observation, f"{NS}Label")
+            obs_instrument = safe_find_text(observation, f"{NS}Instrument")
+            
+            # Parse TargetID to extract target number
+            obs_target_id = None
+            if obs_target:
+                ws_idx = obs_target.find(' ')
+                if ws_idx >= 1:
+                    obs_target_id = obs_target[0:ws_idx]
+                    obs_target = obs_target[ws_idx:].strip()
+            
+            # Initialize observation mode and template-specific fields
+            obs_mode = None
+            obs_subarray = None
+            obs_rop = None
+            obs_groups = None
+            obs_opt_elem = None
+            
+            # Parse Template to extract observing mode and parameters
+            template = observation.find(f"{NS}Template")
+            if template is not None:
+                for templ in template:
+                    templ_tag = templ.tag
+                    
+                    # NIRISS SOSS
+                    if "NirissSoss" in templ_tag:
+                        obs_mode = "SOSS"
+                        for templ_attr in templ:
+                            if "Subarray" in templ_attr.tag:
+                                obs_subarray = templ_attr.text
+                            elif "Exposure" in templ_attr.tag:
+                                for exp_child in templ_attr:
+                                    if "ReadoutPattern" in exp_child.tag:
+                                        obs_rop = exp_child.text
+                                    elif "Groups" in exp_child.tag:
+                                        obs_groups = exp_child.text
+                    
+                    # NIRCam Grism Time Series
+                    elif "NircamGrismTimeSeries" in templ_tag:
+                        obs_mode = "GTS"
+                        for templ_attr in templ:
+                            if "Subarray" in templ_attr.tag:
+                                obs_subarray = templ_attr.text
+                            elif "ReadoutPattern" in templ_attr.tag:
+                                obs_rop = templ_attr.text
+                            elif "LongPupilFilter" in templ_attr.tag:
+                                obs_opt_elem = templ_attr.text
+                            elif "Groups" in templ_attr.tag:
+                                obs_groups = templ_attr.text
+                    
+                    # NIRSpec Bright Object Time Series
+                    elif "NirspecBrightObjectTimeSeries" in templ_tag:
+                        obs_mode = "BOTS"
+                        for templ_attr in templ:
+                            if "Subarray" in templ_attr.tag:
+                                obs_subarray = templ_attr.text
+                            elif "ReadoutPattern" in templ_attr.tag:
+                                obs_rop = templ_attr.text
+                            elif "Groups" in templ_attr.tag:
+                                obs_groups = templ_attr.text
+                            elif "Grating" in templ_attr.tag:
+                                obs_opt_elem = templ_attr.text
+                    
+                    # MIRI LRS
+                    elif "MiriLRS" in templ_tag:
+                        obs_mode = "LRS"
+                        for templ_attr in templ:
+                            if "Subarray" in templ_attr.tag:
+                                obs_subarray = templ_attr.text
+                            elif "ReadoutPattern" in templ_attr.tag:
+                                obs_rop = templ_attr.text
+                            elif "Groups" in templ_attr.tag:
+                                obs_groups = templ_attr.text
+                    
+                    # MIRI Imaging
+                    elif "MiriImaging" in templ_tag:
+                        for templ_attr in templ:
+                            if "Subarray" in templ_attr.tag:
+                                obs_subarray = templ_attr.text
+                            elif "Filters" in templ_attr.tag:
+                                for filter_config in templ_attr:
+                                    if "FilterConfig" in filter_config.tag:
+                                        for fc_child in filter_config:
+                                            if "ReadoutPattern" in fc_child.tag:
+                                                obs_rop = fc_child.text
+                                            elif "Groups" in fc_child.tag:
+                                                obs_groups = fc_child.text
+                                            elif "Filter" in fc_child.tag:
+                                                obs_mode = fc_child.text
+                    
+                    # MIRI MRS
+                    elif "MiriMRS" in templ_tag:
+                        for templ_attr in templ:
+                            if "Subarray" in templ_attr.tag:
+                                obs_subarray = templ_attr.text
+                            elif "Detector" in templ_attr.tag:
+                                obs_mode = templ_attr.text
+                            elif "ExposureList" in templ_attr.tag:
+                                for exp in templ_attr:
+                                    if "Exposure" in exp.tag:
+                                        for exp_child in exp:
+                                            if "ReadoutPatternLong" in exp_child.tag:
+                                                obs_rop = exp_child.text
+                                            elif "GroupsLong" in exp_child.tag:
+                                                obs_groups = exp_child.text
+            
+            # Extract ScienceDuration and CoordinatedParallel
+            obs_sci_dur = safe_find_text(observation, f"{NS}ScienceDuration")
+            obs_coord_par = safe_find_text(observation, f"{NS}CoordinatedParallel")
+            
+            # Parse SpecialRequirements
+            obs_zero_phase = None
+            obs_period = None
+            obs_phase_start = None
+            obs_phase_end = None
+            obs_tso = None
+            
+            special_req = observation.find(f"{NS}SpecialRequirements")
+            if special_req is not None:
+                period_zero_phase = special_req.find(f"{NS}PeriodZeroPhase")
+                if period_zero_phase is not None:
+                    obs_zero_phase = period_zero_phase.get("ZeroPhase")
+                    obs_period = period_zero_phase.get("Period")
+                    obs_phase_start = period_zero_phase.get("PhaseStart")
+                    obs_phase_end = period_zero_phase.get("PhaseEnd")
+                
+                if special_req.find(f"{NS}TimeSeriesObservation") is not None:
+                    obs_tso = 1
+            
+            obs_dict = {
+                "ProposalID": proposal_id,
+                "Label": dr_label,
+                "Obs_Number": obs_number,
+                "TargetID": obs_target,
+                "Target_Number": obs_target_id,
+                "Label2": obs_label2,
+                "Instrument": obs_instrument,
+                "ObservingMode": obs_mode,
+                "ScienceDuration": obs_sci_dur,
+                "CoordinatedParallel": obs_coord_par,
+                "ZeroPhase": obs_zero_phase,
+                "Period": obs_period,
+                "PhaseStart": obs_phase_start,
+                "PhaseEnd": obs_phase_end,
+                "TimeSeriesObservation": obs_tso,
+                "Subarray": obs_subarray,
+                "ReadoutPattern": obs_rop,
+                "Groups": obs_groups,
+                "GratingGrism": obs_opt_elem
+            }
+            
+            observations.append(obs_dict)
+    
+    return observations
+
+
 def parse_apt_file(file_path):
     """
     Parse an APT XML file and extract proposal information.
@@ -41,7 +271,9 @@ def parse_apt_file(file_path):
         "AllocatedTime": None,
         "ChargedTime": None,
         "ObservingDescription": None,
-        "LastName": None
+        "LastName": None,
+        "Targets": [],
+        "DataRequests": []
     }
     
     # Find ProposalInformation node
@@ -70,10 +302,23 @@ def parse_apt_file(file_path):
         if investigator_address is not None:
             apt_dict["LastName"] = safe_find_text(investigator_address, f"{NS}LastName")
     
+    # Parse Targets section
+    proposal_id = apt_dict["ProposalID"]
+    if proposal_id:
+        apt_dict["Targets"] = parse_targets(root, proposal_id)
+        apt_dict["DataRequests"] = parse_data_requests(root, proposal_id)
+    
     return apt_dict
 
 if __name__ == "__main__":
     file_path = "PPS/APT/2734_APT.xml"
     apt_dict = parse_apt_file(file_path)
     for key, value in apt_dict.items():
-        print(f"{key}: {value}")
+        if key in ["Targets", "DataRequests"]:
+            print(f"{key}: {len(value)} entries")
+            for i, entry in enumerate(value, 1):
+                print(f"  Entry {i}:")
+                for sub_key, sub_value in entry.items():
+                    print(f"    {sub_key}: {sub_value}")
+        else:
+            print(f"{key}: {value}")
