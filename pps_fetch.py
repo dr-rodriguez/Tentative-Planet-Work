@@ -14,7 +14,7 @@ def check_directory(directory):
 
 
 def check_apt_file(program_id):
-    apt_file = f"{work_dir}/PPS/APT/{program_id}.xml"
+    apt_file = f"{work_dir}/PPS/APT/{program_id}_APT.xml"
     if not os.path.exists(apt_file):
         return False
     return True
@@ -31,6 +31,9 @@ def download_apt(program_id):
         # Unpack the zip file
         shutil.unpack_archive(f"{work_dir}/PPS/APT/{program_id}_APT.zip", f"{work_dir}/PPS/APT")
         os.remove(f"{work_dir}/PPS/APT/{program_id}_APT.zip")
+
+        # Rename the xml file
+        os.rename(f"{work_dir}/PPS/APT/{program_id}.xml", f"{work_dir}/PPS/APT/{program_id}_APT.xml")
         
         # Remove manifest file
         os.remove(f"{work_dir}/PPS/APT/manifest")
