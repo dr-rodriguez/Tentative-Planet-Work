@@ -48,14 +48,14 @@ class TestSafeFindText:
     
     def test_find_text_success(self, minimal_xml_root):
         """Test successfully finding text in an element."""
-        xml = f'<root><{NS}TestTag>test value</{NS}TestTag></root>'
+        xml = '<root xmlns="http://www.stsci.edu/JWST/APT"><TestTag>test value</TestTag></root>'
         root = minimal_xml_root(xml)
         result = safe_find_text(root, f"{NS}TestTag")
         assert result == "test value"
     
     def test_find_text_with_whitespace(self, minimal_xml_root):
         """Test finding text with whitespace that gets stripped."""
-        xml = f'<root><{NS}TestTag>  test value  </{NS}TestTag></root>'
+        xml = '<root xmlns="http://www.stsci.edu/JWST/APT"><TestTag>  test value  </TestTag></root>'
         root = minimal_xml_root(xml)
         result = safe_find_text(root, f"{NS}TestTag")
         assert result == "test value"
@@ -69,14 +69,14 @@ class TestSafeFindText:
     
     def test_find_text_none_text(self, minimal_xml_root):
         """Test finding element with None text."""
-        xml = f'<root><{NS}TestTag></{NS}TestTag></root>'
+        xml = '<root xmlns="http://www.stsci.edu/JWST/APT"><TestTag></TestTag></root>'
         root = minimal_xml_root(xml)
         result = safe_find_text(root, f"{NS}TestTag")
         assert result is None
     
     def test_find_text_empty_string(self, minimal_xml_root):
         """Test finding element with empty string."""
-        xml = f'<root><{NS}TestTag></{NS}TestTag></root>'
+        xml = '<root xmlns="http://www.stsci.edu/JWST/APT"><TestTag></TestTag></root>'
         root = minimal_xml_root(xml)
         result = safe_find_text(root, f"{NS}TestTag")
         assert result is None
@@ -87,17 +87,14 @@ class TestExtractTextByTag:
     
     def test_extract_text_pattern_match(self, minimal_xml_root):
         """Test extracting text by tag pattern."""
-        xml = f'<root><{NS}SomeSubarray>SUBSTRIP256</{NS}SomeSubarray></root>'
+        xml = '<root xmlns="http://www.stsci.edu/JWST/APT"><SomeSubarray>SUBSTRIP256</SomeSubarray></root>'
         root = minimal_xml_root(xml)
         result = extract_text_by_tag(root, "Subarray")
         assert result == "SUBSTRIP256"
     
     def test_extract_text_multiple_matches(self, minimal_xml_root):
         """Test extracting text when multiple matches exist (first wins)."""
-        xml = f'''<root>
-            <{NS}FirstSubarray>FIRST</{NS}FirstSubarray>
-            <{NS}SecondSubarray>SECOND</{NS}SecondSubarray>
-        </root>'''
+        xml = '<root xmlns="http://www.stsci.edu/JWST/APT">\n            <FirstSubarray>FIRST</FirstSubarray>\n            <SecondSubarray>SECOND</SecondSubarray>\n        </root>'
         root = minimal_xml_root(xml)
         result = extract_text_by_tag(root, "Subarray")
         assert result == "FIRST"
@@ -111,14 +108,14 @@ class TestExtractTextByTag:
     
     def test_extract_text_none_text(self, minimal_xml_root):
         """Test extracting text when element has None text."""
-        xml = f'<root><{NS}SomeSubarray></{NS}SomeSubarray></root>'
+        xml = '<root xmlns="http://www.stsci.edu/JWST/APT"><SomeSubarray></SomeSubarray></root>'
         root = minimal_xml_root(xml)
         result = extract_text_by_tag(root, "Subarray")
         assert result is None
     
     def test_extract_text_with_whitespace(self, minimal_xml_root):
         """Test extracting text with whitespace that gets stripped."""
-        xml = f'<root><{NS}SomeSubarray>  SUBSTRIP256  </{NS}SomeSubarray></root>'
+        xml = '<root xmlns="http://www.stsci.edu/JWST/APT"><SomeSubarray>  SUBSTRIP256  </SomeSubarray></root>'
         root = minimal_xml_root(xml)
         result = extract_text_by_tag(root, "Subarray")
         assert result == "SUBSTRIP256"
@@ -130,11 +127,7 @@ class TestExtractCommonAttributes:
     
     def test_extract_all_attributes(self, minimal_xml_root):
         """Test extracting all common attributes."""
-        xml = f'''<template>
-            <{NS}Subarray>SUBSTRIP256</{NS}Subarray>
-            <{NS}ReadoutPattern>NISRAPID</{NS}ReadoutPattern>
-            <{NS}Groups>9</{NS}Groups>
-        </template>'''
+        xml = '<template xmlns="http://www.stsci.edu/JWST/APT">\n            <Subarray>SUBSTRIP256</Subarray>\n            <ReadoutPattern>NISRAPID</ReadoutPattern>\n            <Groups>9</Groups>\n        </template>'
         templ = minimal_xml_root(xml)
         result = extract_common_attributes(templ)
         assert result["obs_subarray"] == "SUBSTRIP256"
@@ -143,10 +136,7 @@ class TestExtractCommonAttributes:
     
     def test_extract_partial_attributes(self, minimal_xml_root):
         """Test extracting when some attributes are missing."""
-        xml = f'''<template>
-            <{NS}Subarray>SUBSTRIP256</{NS}Subarray>
-            <{NS}Groups>9</{NS}Groups>
-        </template>'''
+        xml = '<template xmlns="http://www.stsci.edu/JWST/APT">\n            <Subarray>SUBSTRIP256</Subarray>\n            <Groups>9</Groups>\n        </template>'
         templ = minimal_xml_root(xml)
         result = extract_common_attributes(templ)
         assert result["obs_subarray"] == "SUBSTRIP256"
@@ -164,11 +154,7 @@ class TestExtractCommonAttributes:
     
     def test_extract_pattern_matching(self, minimal_xml_root):
         """Test that pattern matching works for tag names."""
-        xml = f'''<template>
-            <{NS}SomeSubarray>SUBSTRIP256</{NS}SomeSubarray>
-            <{NS}SomeReadoutPattern>NISRAPID</{NS}SomeReadoutPattern>
-            <{NS}SomeGroups>9</{NS}SomeGroups>
-        </template>'''
+        xml = '<template xmlns="http://www.stsci.edu/JWST/APT">\n            <SomeSubarray>SUBSTRIP256</SomeSubarray>\n            <SomeReadoutPattern>NISRAPID</SomeReadoutPattern>\n            <SomeGroups>9</SomeGroups>\n        </template>'
         templ = minimal_xml_root(xml)
         result = extract_common_attributes(templ)
         assert result["obs_subarray"] == "SUBSTRIP256"
@@ -181,10 +167,7 @@ class TestExtractFromExposure:
     
     def test_extract_all_fields(self, minimal_xml_root):
         """Test extracting ReadoutPattern and Groups from Exposure."""
-        xml = f'''<exposure>
-            <{NS}ReadoutPattern>NISRAPID</{NS}ReadoutPattern>
-            <{NS}Groups>9</{NS}Groups>
-        </exposure>'''
+        xml = '<exposure xmlns="http://www.stsci.edu/JWST/APT">\n            <ReadoutPattern>NISRAPID</ReadoutPattern>\n            <Groups>9</Groups>\n        </exposure>'
         templ_attr = minimal_xml_root(xml)
         result = extract_from_exposure(templ_attr)
         assert result["obs_rop"] == "NISRAPID"
@@ -192,9 +175,7 @@ class TestExtractFromExposure:
     
     def test_extract_partial_fields(self, minimal_xml_root):
         """Test extracting when some fields are missing."""
-        xml = f'''<exposure>
-            <{NS}ReadoutPattern>NISRAPID</{NS}ReadoutPattern>
-        </exposure>'''
+        xml = '<exposure xmlns="http://www.stsci.edu/JWST/APT">\n            <ReadoutPattern>NISRAPID</ReadoutPattern>\n        </exposure>'
         templ_attr = minimal_xml_root(xml)
         result = extract_from_exposure(templ_attr)
         assert result["obs_rop"] == "NISRAPID"
@@ -210,10 +191,7 @@ class TestExtractFromExposure:
     
     def test_extract_pattern_matching(self, minimal_xml_root):
         """Test that pattern matching works for tag names."""
-        xml = f'''<exposure>
-            <{NS}SomeReadoutPattern>NISRAPID</{NS}SomeReadoutPattern>
-            <{NS}SomeGroups>9</{NS}SomeGroups>
-        </exposure>'''
+        xml = '<exposure xmlns="http://www.stsci.edu/JWST/APT">\n            <SomeReadoutPattern>NISRAPID</SomeReadoutPattern>\n            <SomeGroups>9</SomeGroups>\n        </exposure>'
         templ_attr = minimal_xml_root(xml)
         result = extract_from_exposure(templ_attr)
         assert result["obs_rop"] == "NISRAPID"
@@ -226,14 +204,17 @@ class TestParseNirissSoss:
     
     def test_parse_complete_soss(self, minimal_xml_root):
         """Test parsing complete NIRISS SOSS template."""
-        xml = '''<nisoss:NirissSoss>
-            <nisoss:Subarray>SUBSTRIP256</nisoss:Subarray>
-            <nisoss:Exposure>
-                <nisoss:ReadoutPattern>NISRAPID</nisoss:ReadoutPattern>
-                <nisoss:Groups>9</nisoss:Groups>
-            </nisoss:Exposure>
-        </nisoss:NirissSoss>'''
-        templ = minimal_xml_root(xml)
+        xml = '''<root xmlns:nisoss="http://www.stsci.edu/JWST/APT/Template/NirissSoss">
+            <nisoss:NirissSoss>
+                <nisoss:Subarray>SUBSTRIP256</nisoss:Subarray>
+                <nisoss:Exposure>
+                    <nisoss:ReadoutPattern>NISRAPID</nisoss:ReadoutPattern>
+                    <nisoss:Groups>9</nisoss:Groups>
+                </nisoss:Exposure>
+            </nisoss:NirissSoss>
+        </root>'''
+        root = minimal_xml_root(xml)
+        templ = root[0]
         result = parse_niriss_soss(templ)
         assert result["obs_mode"] == "SOSS"
         assert result["obs_subarray"] == "SUBSTRIP256"
@@ -243,8 +224,9 @@ class TestParseNirissSoss:
     
     def test_parse_soss_missing_fields(self, minimal_xml_root):
         """Test parsing SOSS template with missing fields."""
-        xml = "<nisoss:NirissSoss></nisoss:NirissSoss>"
-        templ = minimal_xml_root(xml)
+        xml = '<root xmlns:nisoss="http://www.stsci.edu/JWST/APT/Template/NirissSoss"><nisoss:NirissSoss></nisoss:NirissSoss></root>'
+        root = minimal_xml_root(xml)
+        templ = root[0]
         result = parse_niriss_soss(templ)
         assert result["obs_mode"] == "SOSS"
         assert result["obs_subarray"] is None
@@ -254,10 +236,13 @@ class TestParseNirissSoss:
     
     def test_parse_soss_subarray_only(self, minimal_xml_root):
         """Test parsing SOSS template with only Subarray."""
-        xml = '''<nisoss:NirissSoss>
-            <nisoss:Subarray>SUBSTRIP256</nisoss:Subarray>
-        </nisoss:NirissSoss>'''
-        templ = minimal_xml_root(xml)
+        xml = '''<root xmlns:nisoss="http://www.stsci.edu/JWST/APT/Template/NirissSoss">
+            <nisoss:NirissSoss>
+                <nisoss:Subarray>SUBSTRIP256</nisoss:Subarray>
+            </nisoss:NirissSoss>
+        </root>'''
+        root = minimal_xml_root(xml)
+        templ = root[0]
         result = parse_niriss_soss(templ)
         assert result["obs_mode"] == "SOSS"
         assert result["obs_subarray"] == "SUBSTRIP256"
@@ -270,13 +255,16 @@ class TestParseNircamGts:
     
     def test_parse_complete_gts(self, minimal_xml_root):
         """Test parsing complete NIRCam GTS template."""
-        xml = '''<ncgts:NircamGrismTimeSeries>
-            <ncgts:Subarray>SUBSTRIP256</ncgts:Subarray>
-            <ncgts:ReadoutPattern>NISRAPID</ncgts:ReadoutPattern>
-            <ncgts:Groups>9</ncgts:Groups>
-            <ncgts:LongPupilFilter>F322W2</ncgts:LongPupilFilter>
-        </ncgts:NircamGrismTimeSeries>'''
-        templ = minimal_xml_root(xml)
+        xml = '''<root xmlns:ncgts="http://www.stsci.edu/JWST/APT/Template/NircamGrismTimeSeries">
+            <ncgts:NircamGrismTimeSeries>
+                <ncgts:Subarray>SUBSTRIP256</ncgts:Subarray>
+                <ncgts:ReadoutPattern>NISRAPID</ncgts:ReadoutPattern>
+                <ncgts:Groups>9</ncgts:Groups>
+                <ncgts:LongPupilFilter>F322W2</ncgts:LongPupilFilter>
+            </ncgts:NircamGrismTimeSeries>
+        </root>'''
+        root = minimal_xml_root(xml)
+        templ = root[0]
         result = parse_nircam_gts(templ)
         assert result["obs_mode"] == "GTS"
         assert result["obs_subarray"] == "SUBSTRIP256"
@@ -286,8 +274,9 @@ class TestParseNircamGts:
     
     def test_parse_gts_missing_fields(self, minimal_xml_root):
         """Test parsing GTS template with missing fields."""
-        xml = "<ncgts:NircamGrismTimeSeries></ncgts:NircamGrismTimeSeries>"
-        templ = minimal_xml_root(xml)
+        xml = '<root xmlns:ncgts="http://www.stsci.edu/JWST/APT/Template/NircamGrismTimeSeries"><ncgts:NircamGrismTimeSeries></ncgts:NircamGrismTimeSeries></root>'
+        root = minimal_xml_root(xml)
+        templ = root[0]
         result = parse_nircam_gts(templ)
         assert result["obs_mode"] == "GTS"
         assert result["obs_subarray"] is None
@@ -297,10 +286,13 @@ class TestParseNircamGts:
     
     def test_parse_gts_filter_only(self, minimal_xml_root):
         """Test parsing GTS template with only LongPupilFilter."""
-        xml = '''<ncgts:NircamGrismTimeSeries>
-            <ncgts:LongPupilFilter>F322W2</ncgts:LongPupilFilter>
-        </ncgts:NircamGrismTimeSeries>'''
-        templ = minimal_xml_root(xml)
+        xml = '''<root xmlns:ncgts="http://www.stsci.edu/JWST/APT/Template/NircamGrismTimeSeries">
+            <ncgts:NircamGrismTimeSeries>
+                <ncgts:LongPupilFilter>F322W2</ncgts:LongPupilFilter>
+            </ncgts:NircamGrismTimeSeries>
+        </root>'''
+        root = minimal_xml_root(xml)
+        templ = root[0]
         result = parse_nircam_gts(templ)
         assert result["obs_mode"] == "GTS"
         assert result["obs_opt_elem"] == "F322W2"
@@ -312,13 +304,16 @@ class TestParseNirspecBots:
     
     def test_parse_complete_bots(self, minimal_xml_root):
         """Test parsing complete NIRSpec BOTS template."""
-        xml = '''<nsbots:NirspecBrightObjectTimeSeries>
-            <nsbots:Subarray>SUBSTRIP256</nsbots:Subarray>
-            <nsbots:ReadoutPattern>NRSRAPID</nsbots:ReadoutPattern>
-            <nsbots:Groups>9</nsbots:Groups>
-            <nsbots:Grating>G395H</nsbots:Grating>
-        </nsbots:NirspecBrightObjectTimeSeries>'''
-        templ = minimal_xml_root(xml)
+        xml = '''<root xmlns:nsbots="http://www.stsci.edu/JWST/APT/Template/NirspecBrightObjectTimeSeries">
+            <nsbots:NirspecBrightObjectTimeSeries>
+                <nsbots:Subarray>SUBSTRIP256</nsbots:Subarray>
+                <nsbots:ReadoutPattern>NRSRAPID</nsbots:ReadoutPattern>
+                <nsbots:Groups>9</nsbots:Groups>
+                <nsbots:Grating>G395H</nsbots:Grating>
+            </nsbots:NirspecBrightObjectTimeSeries>
+        </root>'''
+        root = minimal_xml_root(xml)
+        templ = root[0]
         result = parse_nirspec_bots(templ)
         assert result["obs_mode"] == "BOTS"
         assert result["obs_subarray"] == "SUBSTRIP256"
@@ -328,8 +323,9 @@ class TestParseNirspecBots:
     
     def test_parse_bots_missing_fields(self, minimal_xml_root):
         """Test parsing BOTS template with missing fields."""
-        xml = "<nsbots:NirspecBrightObjectTimeSeries></nsbots:NirspecBrightObjectTimeSeries>"
-        templ = minimal_xml_root(xml)
+        xml = '<root xmlns:nsbots="http://www.stsci.edu/JWST/APT/Template/NirspecBrightObjectTimeSeries"><nsbots:NirspecBrightObjectTimeSeries></nsbots:NirspecBrightObjectTimeSeries></root>'
+        root = minimal_xml_root(xml)
+        templ = root[0]
         result = parse_nirspec_bots(templ)
         assert result["obs_mode"] == "BOTS"
         assert result["obs_subarray"] is None
@@ -339,10 +335,13 @@ class TestParseNirspecBots:
     
     def test_parse_bots_grating_only(self, minimal_xml_root):
         """Test parsing BOTS template with only Grating."""
-        xml = '''<nsbots:NirspecBrightObjectTimeSeries>
-            <nsbots:Grating>G395H</nsbots:Grating>
-        </nsbots:NirspecBrightObjectTimeSeries>'''
-        templ = minimal_xml_root(xml)
+        xml = '''<root xmlns:nsbots="http://www.stsci.edu/JWST/APT/Template/NirspecBrightObjectTimeSeries">
+            <nsbots:NirspecBrightObjectTimeSeries>
+                <nsbots:Grating>G395H</nsbots:Grating>
+            </nsbots:NirspecBrightObjectTimeSeries>
+        </root>'''
+        root = minimal_xml_root(xml)
+        templ = root[0]
         result = parse_nirspec_bots(templ)
         assert result["obs_mode"] == "BOTS"
         assert result["obs_opt_elem"] == "G395H"
@@ -354,12 +353,15 @@ class TestParseMiriLrs:
     
     def test_parse_complete_lrs(self, minimal_xml_root):
         """Test parsing complete MIRI LRS template."""
-        xml = '''<mlrs:MiriLRS>
-            <mlrs:Subarray>FULL</mlrs:Subarray>
-            <mlrs:ReadoutPattern>FAST</mlrs:ReadoutPattern>
-            <mlrs:Groups>5</mlrs:Groups>
-        </mlrs:MiriLRS>'''
-        templ = minimal_xml_root(xml)
+        xml = '''<root xmlns:mlrs="http://www.stsci.edu/JWST/APT/Template/MiriLRS">
+            <mlrs:MiriLRS>
+                <mlrs:Subarray>FULL</mlrs:Subarray>
+                <mlrs:ReadoutPattern>FAST</mlrs:ReadoutPattern>
+                <mlrs:Groups>5</mlrs:Groups>
+            </mlrs:MiriLRS>
+        </root>'''
+        root = minimal_xml_root(xml)
+        templ = root[0]
         result = parse_miri_lrs(templ)
         assert result["obs_mode"] == "LRS"
         assert result["obs_subarray"] == "FULL"
@@ -369,8 +371,9 @@ class TestParseMiriLrs:
     
     def test_parse_lrs_missing_fields(self, minimal_xml_root):
         """Test parsing LRS template with missing fields."""
-        xml = "<mlrs:MiriLRS></mlrs:MiriLRS>"
-        templ = minimal_xml_root(xml)
+        xml = '<root xmlns:mlrs="http://www.stsci.edu/JWST/APT/Template/MiriLRS"><mlrs:MiriLRS></mlrs:MiriLRS></root>'
+        root = minimal_xml_root(xml)
+        templ = root[0]
         result = parse_miri_lrs(templ)
         assert result["obs_mode"] == "LRS"
         assert result["obs_subarray"] is None
@@ -384,17 +387,20 @@ class TestParseMiriImaging:
     
     def test_parse_complete_imaging(self, minimal_xml_root):
         """Test parsing complete MIRI Imaging template."""
-        xml = '''<mi:MiriImaging>
-            <mi:Subarray>FULL</mi:Subarray>
-            <mi:Filters>
-                <mi:FilterConfig>
-                    <mi:ReadoutPattern>FAST</mi:ReadoutPattern>
-                    <mi:Groups>5</mi:Groups>
-                    <mi:Filter>F770W</mi:Filter>
-                </mi:FilterConfig>
-            </mi:Filters>
-        </mi:MiriImaging>'''
-        templ = minimal_xml_root(xml)
+        xml = '''<root xmlns:mi="http://www.stsci.edu/JWST/APT/Template/MiriImaging">
+            <mi:MiriImaging>
+                <mi:Subarray>FULL</mi:Subarray>
+                <mi:Filters>
+                    <mi:FilterConfig>
+                        <mi:ReadoutPattern>FAST</mi:ReadoutPattern>
+                        <mi:Groups>5</mi:Groups>
+                        <mi:Filter>F770W</mi:Filter>
+                    </mi:FilterConfig>
+                </mi:Filters>
+            </mi:MiriImaging>
+        </root>'''
+        root = minimal_xml_root(xml)
+        templ = root[0]
         result = parse_miri_imaging(templ)
         assert result["obs_mode"] == "F770W"
         assert result["obs_subarray"] == "FULL"
@@ -404,8 +410,9 @@ class TestParseMiriImaging:
     
     def test_parse_imaging_missing_fields(self, minimal_xml_root):
         """Test parsing Imaging template with missing fields."""
-        xml = "<mi:MiriImaging></mi:MiriImaging>"
-        templ = minimal_xml_root(xml)
+        xml = '<root xmlns:mi="http://www.stsci.edu/JWST/APT/Template/MiriImaging"><mi:MiriImaging></mi:MiriImaging></root>'
+        root = minimal_xml_root(xml)
+        templ = root[0]
         result = parse_miri_imaging(templ)
         assert result["obs_mode"] is None
         assert result["obs_subarray"] is None
@@ -415,10 +422,13 @@ class TestParseMiriImaging:
     
     def test_parse_imaging_subarray_only(self, minimal_xml_root):
         """Test parsing Imaging template with only Subarray."""
-        xml = '''<mi:MiriImaging>
-            <mi:Subarray>FULL</mi:Subarray>
-        </mi:MiriImaging>'''
-        templ = minimal_xml_root(xml)
+        xml = '''<root xmlns:mi="http://www.stsci.edu/JWST/APT/Template/MiriImaging">
+            <mi:MiriImaging>
+                <mi:Subarray>FULL</mi:Subarray>
+            </mi:MiriImaging>
+        </root>'''
+        root = minimal_xml_root(xml)
+        templ = root[0]
         result = parse_miri_imaging(templ)
         assert result["obs_subarray"] == "FULL"
         assert result["obs_mode"] is None
@@ -429,17 +439,20 @@ class TestParseMiriMrs:
     
     def test_parse_complete_mrs(self, minimal_xml_root):
         """Test parsing complete MIRI MRS template."""
-        xml = '''<mmrs:MiriMRS>
-            <mmrs:Subarray>FULL</mmrs:Subarray>
-            <mmrs:Detector>CH1</mmrs:Detector>
-            <mmrs:ExposureList>
-                <mmrs:Exposure>
-                    <mmrs:ReadoutPatternLong>FAST</mmrs:ReadoutPatternLong>
-                    <mmrs:GroupsLong>5</mmrs:GroupsLong>
-                </mmrs:Exposure>
-            </mmrs:ExposureList>
-        </mmrs:MiriMRS>'''
-        templ = minimal_xml_root(xml)
+        xml = '''<root xmlns:mmrs="http://www.stsci.edu/JWST/APT/Template/MiriMRS">
+            <mmrs:MiriMRS>
+                <mmrs:Subarray>FULL</mmrs:Subarray>
+                <mmrs:Detector>CH1</mmrs:Detector>
+                <mmrs:ExposureList>
+                    <mmrs:Exposure>
+                        <mmrs:ReadoutPatternLong>FAST</mmrs:ReadoutPatternLong>
+                        <mmrs:GroupsLong>5</mmrs:GroupsLong>
+                    </mmrs:Exposure>
+                </mmrs:ExposureList>
+            </mmrs:MiriMRS>
+        </root>'''
+        root = minimal_xml_root(xml)
+        templ = root[0]
         result = parse_miri_mrs(templ)
         assert result["obs_mode"] == "CH1"
         assert result["obs_subarray"] == "FULL"
@@ -449,8 +462,9 @@ class TestParseMiriMrs:
     
     def test_parse_mrs_missing_fields(self, minimal_xml_root):
         """Test parsing MRS template with missing fields."""
-        xml = "<mmrs:MiriMRS></mmrs:MiriMRS>"
-        templ = minimal_xml_root(xml)
+        xml = '<root xmlns:mmrs="http://www.stsci.edu/JWST/APT/Template/MiriMRS"><mmrs:MiriMRS></mmrs:MiriMRS></root>'
+        root = minimal_xml_root(xml)
+        templ = root[0]
         result = parse_miri_mrs(templ)
         assert result["obs_mode"] is None
         assert result["obs_subarray"] is None
@@ -460,10 +474,13 @@ class TestParseMiriMrs:
     
     def test_parse_mrs_detector_only(self, minimal_xml_root):
         """Test parsing MRS template with only Detector."""
-        xml = '''<mmrs:MiriMRS>
-            <mmrs:Detector>CH1</mmrs:Detector>
-        </mmrs:MiriMRS>'''
-        templ = minimal_xml_root(xml)
+        xml = '''<root xmlns:mmrs="http://www.stsci.edu/JWST/APT/Template/MiriMRS">
+            <mmrs:MiriMRS>
+                <mmrs:Detector>CH1</mmrs:Detector>
+            </mmrs:MiriMRS>
+        </root>'''
+        root = minimal_xml_root(xml)
+        templ = root[0]
         result = parse_miri_mrs(templ)
         assert result["obs_mode"] == "CH1"
         assert result["obs_subarray"] is None
@@ -530,7 +547,7 @@ class TestParseTargets:
     
     def test_parse_targets_empty_section(self, minimal_xml_root):
         """Test parsing when Targets section is empty."""
-        xml = f"<root><{NS}Targets></{NS}Targets></root>"
+        xml = '<root xmlns="http://www.stsci.edu/JWST/APT"><Targets></Targets></root>'
         root = minimal_xml_root(xml)
         targets = parse_targets(root, "1234")
         assert targets == []
@@ -660,7 +677,7 @@ class TestParseDataRequests:
     
     def test_parse_empty_data_requests(self, minimal_xml_root):
         """Test parsing when DataRequests section is empty."""
-        xml = f"<root><{NS}DataRequests></{NS}DataRequests></root>"
+        xml = '<root xmlns="http://www.stsci.edu/JWST/APT"><DataRequests></DataRequests></root>'
         root = minimal_xml_root(xml)
         observations = parse_data_requests(root, "1234")
         assert observations == []
@@ -674,17 +691,7 @@ class TestParseDataRequests:
     
     def test_parse_observation_group_no_label(self, minimal_xml_root):
         """Test parsing when ObservationGroup has no Label."""
-        xml = f'''<root>
-            <{NS}DataRequests>
-                <{NS}ObservationGroup>
-                    <{NS}Observation>
-                        <{NS}Number>1</{NS}Number>
-                        <{NS}TargetID>1 Target</{NS}TargetID>
-                        <{NS}Instrument>NIRISS</{NS}Instrument>
-                    </{NS}Observation>
-                </{NS}ObservationGroup>
-            </{NS}DataRequests>
-        </root>'''
+        xml = '<root xmlns="http://www.stsci.edu/JWST/APT">\n            <DataRequests>\n                <ObservationGroup>\n                    <Observation>\n                        <Number>1</Number>\n                        <TargetID>1 Target</TargetID>\n                        <Instrument>NIRISS</Instrument>\n                    </Observation>\n                </ObservationGroup>\n            </DataRequests>\n        </root>'
         root = minimal_xml_root(xml)
         observations = parse_data_requests(root, "1234")
         
