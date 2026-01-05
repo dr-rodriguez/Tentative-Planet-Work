@@ -14,6 +14,264 @@ def safe_find_text(element, tag):
     return None
 
 
+def extract_text_by_tag(element, tag_pattern):
+    """
+    Extract text from a child element whose tag contains the given pattern.
+    
+    Args:
+        element: XML element to search within
+        tag_pattern: String pattern to match in tag names
+        
+    Returns:
+        Text content of matching element, or None if not found
+    """
+    for child in element:
+        if tag_pattern in child.tag and child.text is not None:
+            return child.text.strip()
+    return None
+
+
+def extract_common_attributes(templ):
+    """
+    Extract common attributes (Subarray, ReadoutPattern, Groups) from template element.
+    
+    Args:
+        templ: Template XML element
+        
+    Returns:
+        Dictionary with obs_subarray, obs_rop, obs_groups
+    """
+    result = {
+        "obs_subarray": None,
+        "obs_rop": None,
+        "obs_groups": None
+    }
+    
+    for templ_attr in templ:
+        if "Subarray" in templ_attr.tag:
+            result["obs_subarray"] = templ_attr.text
+        elif "ReadoutPattern" in templ_attr.tag:
+            result["obs_rop"] = templ_attr.text
+        elif "Groups" in templ_attr.tag:
+            result["obs_groups"] = templ_attr.text
+    
+    return result
+
+
+def extract_from_exposure(templ_attr):
+    """
+    Extract ReadoutPattern and Groups from nested Exposure element.
+    
+    Args:
+        templ_attr: Exposure XML element
+        
+    Returns:
+        Dictionary with obs_rop and obs_groups
+    """
+    result = {
+        "obs_rop": None,
+        "obs_groups": None
+    }
+    
+    for exp_child in templ_attr:
+        if "ReadoutPattern" in exp_child.tag:
+            result["obs_rop"] = exp_child.text
+        elif "Groups" in exp_child.tag:
+            result["obs_groups"] = exp_child.text
+    
+    return result
+
+
+def parse_niriss_soss(templ):
+    """
+    Parse NIRISS SOSS template.
+    
+    Args:
+        templ: Template XML element
+        
+    Returns:
+        Dictionary with obs_mode, obs_subarray, obs_rop, obs_groups, obs_opt_elem
+    """
+    result = {
+        "obs_mode": "SOSS",
+        "obs_subarray": None,
+        "obs_rop": None,
+        "obs_groups": None,
+        "obs_opt_elem": None
+    }
+    
+    for templ_attr in templ:
+        if "Subarray" in templ_attr.tag:
+            result["obs_subarray"] = templ_attr.text
+        elif "Exposure" in templ_attr.tag:
+            exp_result = extract_from_exposure(templ_attr)
+            result["obs_rop"] = exp_result["obs_rop"]
+            result["obs_groups"] = exp_result["obs_groups"]
+    
+    return result
+
+
+def parse_nircam_gts(templ):
+    """
+    Parse NIRCam Grism Time Series template.
+    
+    Args:
+        templ: Template XML element
+        
+    Returns:
+        Dictionary with obs_mode, obs_subarray, obs_rop, obs_groups, obs_opt_elem
+    """
+    result = {
+        "obs_mode": "GTS",
+        "obs_subarray": None,
+        "obs_rop": None,
+        "obs_groups": None,
+        "obs_opt_elem": None
+    }
+    
+    common = extract_common_attributes(templ)
+    result.update(common)
+    
+    for templ_attr in templ:
+        if "LongPupilFilter" in templ_attr.tag:
+            result["obs_opt_elem"] = templ_attr.text
+    
+    return result
+
+
+def parse_nirspec_bots(templ):
+    """
+    Parse NIRSpec Bright Object Time Series template.
+    
+    Args:
+        templ: Template XML element
+        
+    Returns:
+        Dictionary with obs_mode, obs_subarray, obs_rop, obs_groups, obs_opt_elem
+    """
+    result = {
+        "obs_mode": "BOTS",
+        "obs_subarray": None,
+        "obs_rop": None,
+        "obs_groups": None,
+        "obs_opt_elem": None
+    }
+    
+    common = extract_common_attributes(templ)
+    result.update(common)
+    
+    for templ_attr in templ:
+        if "Grating" in templ_attr.tag:
+            result["obs_opt_elem"] = templ_attr.text
+    
+    return result
+
+
+def parse_miri_lrs(templ):
+    """
+    Parse MIRI LRS template.
+    
+    Args:
+        templ: Template XML element
+        
+    Returns:
+        Dictionary with obs_mode, obs_subarray, obs_rop, obs_groups, obs_opt_elem
+    """
+    result = {
+        "obs_mode": "LRS",
+        "obs_subarray": None,
+        "obs_rop": None,
+        "obs_groups": None,
+        "obs_opt_elem": None
+    }
+    
+    common = extract_common_attributes(templ)
+    result.update(common)
+    
+    return result
+
+
+def parse_miri_imaging(templ):
+    """
+    Parse MIRI Imaging template.
+    
+    Args:
+        templ: Template XML element
+        
+    Returns:
+        Dictionary with obs_mode, obs_subarray, obs_rop, obs_groups, obs_opt_elem
+    """
+    result = {
+        "obs_mode": None,
+        "obs_subarray": None,
+        "obs_rop": None,
+        "obs_groups": None,
+        "obs_opt_elem": None
+    }
+    
+    for templ_attr in templ:
+        if "Subarray" in templ_attr.tag:
+            result["obs_subarray"] = templ_attr.text
+        elif "Filters" in templ_attr.tag:
+            for filter_config in templ_attr:
+                if "FilterConfig" in filter_config.tag:
+                    for fc_child in filter_config:
+                        if "ReadoutPattern" in fc_child.tag:
+                            result["obs_rop"] = fc_child.text
+                        elif "Groups" in fc_child.tag:
+                            result["obs_groups"] = fc_child.text
+                        elif "Filter" in fc_child.tag:
+                            result["obs_mode"] = fc_child.text
+    
+    return result
+
+
+def parse_miri_mrs(templ):
+    """
+    Parse MIRI MRS template.
+    
+    Args:
+        templ: Template XML element
+        
+    Returns:
+        Dictionary with obs_mode, obs_subarray, obs_rop, obs_groups, obs_opt_elem
+    """
+    result = {
+        "obs_mode": None,
+        "obs_subarray": None,
+        "obs_rop": None,
+        "obs_groups": None,
+        "obs_opt_elem": None
+    }
+    
+    for templ_attr in templ:
+        if "Subarray" in templ_attr.tag:
+            result["obs_subarray"] = templ_attr.text
+        elif "Detector" in templ_attr.tag:
+            result["obs_mode"] = templ_attr.text
+        elif "ExposureList" in templ_attr.tag:
+            for exp in templ_attr:
+                if "Exposure" in exp.tag:
+                    for exp_child in exp:
+                        if "ReadoutPatternLong" in exp_child.tag:
+                            result["obs_rop"] = exp_child.text
+                        elif "GroupsLong" in exp_child.tag:
+                            result["obs_groups"] = exp_child.text
+    
+    return result
+
+
+# Template parser dispatch mapping
+TEMPLATE_PARSERS = {
+    "NirissSoss": parse_niriss_soss,
+    "NircamGrismTimeSeries": parse_nircam_gts,
+    "NirspecBrightObjectTimeSeries": parse_nirspec_bots,
+    "MiriLRS": parse_miri_lrs,
+    "MiriImaging": parse_miri_imaging,
+    "MiriMRS": parse_miri_mrs,
+}
+
+
 def parse_targets(root, proposal_id):
     """
     Parse Targets section from APT XML.
@@ -112,87 +370,21 @@ def parse_data_requests(root, proposal_id):
                 for templ in template:
                     templ_tag = templ.tag
                     
-                    # NIRISS SOSS
-                    if "NirissSoss" in templ_tag:
-                        obs_mode = "SOSS"
-                        for templ_attr in templ:
-                            if "Subarray" in templ_attr.tag:
-                                obs_subarray = templ_attr.text
-                            elif "Exposure" in templ_attr.tag:
-                                for exp_child in templ_attr:
-                                    if "ReadoutPattern" in exp_child.tag:
-                                        obs_rop = exp_child.text
-                                    elif "Groups" in exp_child.tag:
-                                        obs_groups = exp_child.text
+                    # Find matching parser function
+                    parser_func = None
+                    for template_key, parser in TEMPLATE_PARSERS.items():
+                        if template_key in templ_tag:
+                            parser_func = parser
+                            break
                     
-                    # NIRCam Grism Time Series
-                    elif "NircamGrismTimeSeries" in templ_tag:
-                        obs_mode = "GTS"
-                        for templ_attr in templ:
-                            if "Subarray" in templ_attr.tag:
-                                obs_subarray = templ_attr.text
-                            elif "ReadoutPattern" in templ_attr.tag:
-                                obs_rop = templ_attr.text
-                            elif "LongPupilFilter" in templ_attr.tag:
-                                obs_opt_elem = templ_attr.text
-                            elif "Groups" in templ_attr.tag:
-                                obs_groups = templ_attr.text
-                    
-                    # NIRSpec Bright Object Time Series
-                    elif "NirspecBrightObjectTimeSeries" in templ_tag:
-                        obs_mode = "BOTS"
-                        for templ_attr in templ:
-                            if "Subarray" in templ_attr.tag:
-                                obs_subarray = templ_attr.text
-                            elif "ReadoutPattern" in templ_attr.tag:
-                                obs_rop = templ_attr.text
-                            elif "Groups" in templ_attr.tag:
-                                obs_groups = templ_attr.text
-                            elif "Grating" in templ_attr.tag:
-                                obs_opt_elem = templ_attr.text
-                    
-                    # MIRI LRS
-                    elif "MiriLRS" in templ_tag:
-                        obs_mode = "LRS"
-                        for templ_attr in templ:
-                            if "Subarray" in templ_attr.tag:
-                                obs_subarray = templ_attr.text
-                            elif "ReadoutPattern" in templ_attr.tag:
-                                obs_rop = templ_attr.text
-                            elif "Groups" in templ_attr.tag:
-                                obs_groups = templ_attr.text
-                    
-                    # MIRI Imaging
-                    elif "MiriImaging" in templ_tag:
-                        for templ_attr in templ:
-                            if "Subarray" in templ_attr.tag:
-                                obs_subarray = templ_attr.text
-                            elif "Filters" in templ_attr.tag:
-                                for filter_config in templ_attr:
-                                    if "FilterConfig" in filter_config.tag:
-                                        for fc_child in filter_config:
-                                            if "ReadoutPattern" in fc_child.tag:
-                                                obs_rop = fc_child.text
-                                            elif "Groups" in fc_child.tag:
-                                                obs_groups = fc_child.text
-                                            elif "Filter" in fc_child.tag:
-                                                obs_mode = fc_child.text
-                    
-                    # MIRI MRS
-                    elif "MiriMRS" in templ_tag:
-                        for templ_attr in templ:
-                            if "Subarray" in templ_attr.tag:
-                                obs_subarray = templ_attr.text
-                            elif "Detector" in templ_attr.tag:
-                                obs_mode = templ_attr.text
-                            elif "ExposureList" in templ_attr.tag:
-                                for exp in templ_attr:
-                                    if "Exposure" in exp.tag:
-                                        for exp_child in exp:
-                                            if "ReadoutPatternLong" in exp_child.tag:
-                                                obs_rop = exp_child.text
-                                            elif "GroupsLong" in exp_child.tag:
-                                                obs_groups = exp_child.text
+                    # Parse template if a matching parser was found
+                    if parser_func is not None:
+                        result = parser_func(templ)
+                        obs_mode = result["obs_mode"]
+                        obs_subarray = result["obs_subarray"]
+                        obs_rop = result["obs_rop"]
+                        obs_groups = result["obs_groups"]
+                        obs_opt_elem = result["obs_opt_elem"]
             
             # Extract ScienceDuration and CoordinatedParallel
             obs_sci_dur = safe_find_text(observation, f"{NS}ScienceDuration")
