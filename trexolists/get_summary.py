@@ -1,7 +1,9 @@
 # Script to get the Trexolist summary information for a given planet/proposal ID
 
 import os
+from astropy.time import Time
 from trexolists.parse_apt import parse_apt_file
+from trexolists.parse_vsr import parse_vsr_file
 from trexolists.pps_fetch import download_apt, download_vsr, check_apt_file, check_vsr_file
 
 # Defaults
@@ -9,7 +11,77 @@ work_dir = "."
 apt_dir = os.path.join(work_dir, "PPS", "APT")
 vsr_dir = os.path.join(work_dir, "PPS", "VSR")
 
-def summary_info(apt_dict, target_name, planet_letter):
+
+def parse_vsr_date(date_string):
+    """
+    Parse VSR date format and convert to decimal year and formatted string.
+    
+    Parameters
+    ----------
+    date_string : str
+        Date string in format "Jun 21, 2022 02:41:18"
+    
+    Returns
+    -------
+    tuple
+        (decimal_year, formatted_string) where decimal_year is float and formatted_string is "YYYY-MM-DD--HH:MM:SS"
+        Returns (None, None) if parsing fails
+    """
+    if not date_string:
+        return None, None
+    
+    try:
+        # Parse month name to number
+        month_map = {
+            'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04',
+            'May': '05', 'Jun': '06', 'Jul': '07', 'Aug': '08',
+            'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'
+        }
+        
+        # Format: "Jun 21, 2022 02:41:18"
+        parts = date_string.split(',')
+        if len(parts) < 2:
+            return None, None
+        
+        month_day = parts[0].strip()
+        month_day_parts = month_day.split()
+        if len(month_day_parts) < 2:
+            return None, None
+        month = month_day_parts[0]
+        day = month_day_parts[1]
+        
+        year_time = parts[1].strip()
+        year_time_parts = year_time.split()
+        if len(year_time_parts) < 2:
+            return None, None
+        year = year_time_parts[0]
+        time = year_time_parts[1]
+        
+        if not all([month, day, year, time]):
+            return None, None
+        
+        month_num = month_map.get(month)
+        if not month_num:
+            return None, None
+        
+        # Format day with leading zero if needed
+        day = day.zfill(2)
+        
+        # Create ISO format string: "2022-06-21T02:41:18"
+        iso_string = f"{year}-{month_num}-{day}T{time}"
+        
+        # Calculate decimal year
+        decimal_year = round(Time(iso_string, format='isot').decimalyear, 3)
+        
+        # Create formatted string: "2022-06-21--02:41:18"
+        formatted_string = f"{year}-{month_num}-{day}--{time}"
+        
+        return decimal_year, formatted_string
+    except Exception:
+        return None, None
+
+
+def summary_info(apt_dict, target_name, planet_letter, vsr_dict=None):
     """
 
     HTML columns that are being used:
@@ -75,25 +147,25 @@ def summary_info(apt_dict, target_name, planet_letter):
         "ProprietaryPeriod": None,
         "RA": None,
         "Dec": None,
-        "StarKmag": None,
-        "StarDistance": None,
-        "StarTeff": None,
-        "StarFeH": None,
-        "Starlogg": None,
-        "StarMass": None,
-        "StarRadius": None,
-        "OrbitalPeriod": None,
-        "SemiMajorAxis": None,
-        "OrbitalInclination": None,
-        "PlanetMass": None,
-        "PlanetRadius": None,
-        "PlanetGravity": None,
-        "PlanetDensity": None,
-        "PlanetEqTemp": None,
-        "TransitDepth": None,
-        "TransitDuration": None,
-        "PlanetTSM": None,
-        "PlanetESM": None,
+        # "StarKmag": None,
+        # "StarDistance": None,
+        # "StarTeff": None,
+        # "StarFeH": None,
+        # "Starlogg": None,
+        # "StarMass": None,
+        # "StarRadius": None,
+        # "OrbitalPeriod": None,
+        # "SemiMajorAxis": None,
+        # "OrbitalInclination": None,
+        # "PlanetMass": None,
+        # "PlanetRadius": None,
+        # "PlanetGravity": None,
+        # "PlanetDensity": None,
+        # "PlanetEqTemp": None,
+        # "TransitDepth": None,
+        # "TransitDuration": None,
+        # "PlanetTSM": None,
+        # "PlanetESM": None,
         "PlanWindow": None,
     }
 
@@ -129,6 +201,44 @@ def summary_info(apt_dict, target_name, planet_letter):
         result["Subarray"] = obs.get("Subarray")
         result["ReadoutPattern"] = obs.get("ReadoutPattern")
         result["Groups"] = obs.get("Groups")
+        
+        # Match VSR visit to this observation
+        if vsr_dict:
+            visits = vsr_dict.get("Visits", [])
+            obs_number = obs.get("Obs_Number")
+            if obs_number:
+                # Find matching visit by observation number
+                matching_visit = None
+                for visit in visits:
+                    if visit.get("observation") == str(obs_number):
+                        matching_visit = visit
+                        break
+                
+                if matching_visit:
+                    # Extract VisitStatus
+                    result["VisitStatus"] = matching_visit.get("status")
+                    
+                    # Extract Hours (convert to float if present)
+                    hours_str = matching_visit.get("hours")
+                    if hours_str:
+                        try:
+                            result["Hours"] = float(hours_str)
+                        except (ValueError, TypeError):
+                            result["Hours"] = None
+                    
+                    # Extract and convert startTime
+                    start_time = matching_visit.get("startTime")
+                    if start_time:
+                        decimal_year, formatted_string = parse_vsr_date(start_time)
+                        result["StartUTDecimal"] = decimal_year
+                        result["StartUTFormatted"] = formatted_string
+                    
+                    # Extract PlanWindow (use "X" if None or empty)
+                    plan_window = matching_visit.get("planWindow")
+                    if plan_window:
+                        result["PlanWindow"] = plan_window
+                    else:
+                        result["PlanWindow"] = "X"
 
     # Find matching target from Targets list
     targets = apt_dict.get("Targets", [])
@@ -173,8 +283,9 @@ if __name__ == "__main__":
     apt_file = os.path.join(apt_dir, f"{proposal_id}_APT.xml")
     vsr_file = os.path.join(vsr_dir, f"{proposal_id}_VSR.xml")
     apt_dict = parse_apt_file(apt_file, target_name)
+    vsr_dict = parse_vsr_file(vsr_file, target_name)
 
-    summary_info = summary_info(apt_dict, target_name, planet_letter)
+    summary_info = summary_info(apt_dict, target_name, planet_letter, vsr_dict)
 
     for key, value in summary_info.items():
         print(f"{key}: {value}")
