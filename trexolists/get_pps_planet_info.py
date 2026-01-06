@@ -1,8 +1,8 @@
 # Script to get the Trexolist summary information for a given planet/proposal ID
 
 import os
-from parse_apt import parse_apt_file
-from pps_fetch import download_apt, download_vsr, check_apt_file, check_vsr_file
+from trexolists.parse_apt import parse_apt_file
+from trexolists.pps_fetch import download_apt, download_vsr, check_apt_file, check_vsr_file
 
 # Defaults
 work_dir = "."
@@ -64,7 +64,97 @@ def summary_info(apt_dict, target_name, planet_letter):
         "Cycle": None,
         "Obs": None,
         "VisitStatus": None,
+        "ObservingMode": None,
+        "Subarray": None,
+        "ReadoutPattern": None,
+        "Groups": None,
+        "StartUTDecimal": None,
+        "StartUTFormatted": None,
+        "Hours": None,
+        "PIName": None,
+        "ProprietaryPeriod": None,
+        "RA": None,
+        "Dec": None,
+        "StarKmag": None,
+        "StarDistance": None,
+        "StarTeff": None,
+        "StarFeH": None,
+        "Starlogg": None,
+        "StarMass": None,
+        "StarRadius": None,
+        "OrbitalPeriod": None,
+        "SemiMajorAxis": None,
+        "OrbitalInclination": None,
+        "PlanetMass": None,
+        "PlanetRadius": None,
+        "PlanetGravity": None,
+        "PlanetDensity": None,
+        "PlanetEqTemp": None,
+        "TransitDepth": None,
+        "TransitDuration": None,
+        "PlanetTSM": None,
+        "PlanetESM": None,
+        "PlanWindow": None,
     }
+
+    # Extract top-level fields
+    if apt_dict.get("ProposalID"):
+        # TODO: Figure out how COM is set and what other values are possible
+        # result["Program"] = f"COM {apt_dict['ProposalID']}"
+        result["Program"] = apt_dict['ProposalID']
+
+    result["Cycle"] = apt_dict.get("Cycle")
+    result["PIName"] = apt_dict.get("LastName")
+    result["ProprietaryPeriod"] = apt_dict.get("ProprietaryPeriod")
+
+    # Find matching observations from DataRequests
+    data_requests = apt_dict.get("DataRequests", [])
+    matching_obs = [obs for obs in data_requests if obs.get("TargetID") == target_name]
+    
+    if matching_obs:
+        # Use first matching observation
+        obs = matching_obs[0]
+        result["Obs"] = obs.get("Obs_Number")
+        
+        # Format observing mode: Instrument + " " + ObservingMode
+        instrument = obs.get("Instrument")
+        obs_mode = obs.get("ObservingMode")
+        if instrument and obs_mode:
+            result["ObservingMode"] = f"{instrument} {obs_mode}"
+        elif instrument:
+            result["ObservingMode"] = instrument
+        elif obs_mode:
+            result["ObservingMode"] = obs_mode
+        
+        result["Subarray"] = obs.get("Subarray")
+        result["ReadoutPattern"] = obs.get("ReadoutPattern")
+        result["Groups"] = obs.get("Groups")
+
+    # Find matching target from Targets list
+    targets = apt_dict.get("Targets", [])
+    matching_target = None
+    for target in targets:
+        if target.get("TargetName") == target_name:
+            matching_target = target
+            break
+    
+    # NOTE: This would be replaced in the final version with info from nexsci
+    if matching_target:
+        # Parse EquatorialCoordinates Value attribute
+        # Format: "00 04 11.1377 -47 21 38.32" -> RA: "00:04:11.1377", Dec: "-47:21:38.32"
+        eq_coords = matching_target.get("EquatorialCoordinates")
+        if eq_coords:
+            parts = eq_coords.split()
+            if len(parts) >= 6:
+                ra_hh = parts[0]
+                ra_mm = parts[1]
+                ra_ss = parts[2]
+                dec_dd = parts[3]
+                dec_mm = parts[4]
+                dec_ss = parts[5]
+                
+                result["RA"] = f"{ra_hh}:{ra_mm}:{ra_ss}"
+                result["Dec"] = f"{dec_dd}:{dec_mm}:{dec_ss}"
 
     return result
 
@@ -84,4 +174,7 @@ if __name__ == "__main__":
     vsr_file = os.path.join(vsr_dir, f"{proposal_id}_VSR.xml")
     apt_dict = parse_apt_file(apt_file, target_name)
 
-    print(apt_dict)
+    summary_info = summary_info(apt_dict, target_name, planet_letter)
+
+    for key, value in summary_info.items():
+        print(f"{key}: {value}")
