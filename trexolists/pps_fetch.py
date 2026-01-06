@@ -10,10 +10,31 @@ work_dir = "."
 
 
 def check_directory(directory):
+    """
+    Create directory if it does not exist.
+    
+    Parameters
+    ----------
+    directory : str
+        Path to the directory to create.
+    """
     os.makedirs(directory, exist_ok=True)
 
 
 def check_apt_file(program_id):
+    """
+    Check if APT file exists for the given program ID.
+    
+    Parameters
+    ----------
+    program_id : int
+        Program ID to check.
+    
+    Returns
+    -------
+    bool
+        True if APT file exists, False otherwise.
+    """
     apt_file = f"{work_dir}/PPS/APT/{program_id}_APT.xml"
     if not os.path.exists(apt_file):
         return False
@@ -21,6 +42,14 @@ def check_apt_file(program_id):
 
 
 def download_apt(program_id):
+    """
+    Download and extract APT file for the given program ID.
+    
+    Parameters
+    ----------
+    program_id : int
+        Program ID to download APT file for.
+    """
     url = f"{base_url}{program_id}.aptx"
     response = requests.get(url)
     if response.status_code == 200:
@@ -44,6 +73,14 @@ def download_apt(program_id):
 
 
 def download_vsr(program_id):
+    """
+    Download VSR file for the given program ID.
+    
+    Parameters
+    ----------
+    program_id : int
+        Program ID to download VSR file for.
+    """
     url = f"https://www.stsci.edu/jwst-program-info/visits/?program={program_id}&download=&pi=1&referrer=https://www.stsci.edu{program_id}-visit-status.xml"
     response = requests.get(url)
     if response.status_code == 200:
@@ -55,6 +92,19 @@ def download_vsr(program_id):
 
 
 def check_vsr_file(program_id):
+    """
+    Check if VSR file exists for the given program ID.
+    
+    Parameters
+    ----------
+    program_id : int
+        Program ID to check.
+    
+    Returns
+    -------
+    bool
+        True if VSR file exists, False otherwise.
+    """
     vsr_file = f"{work_dir}/PPS/VSR/{program_id}_VSR.xml"
     if not os.path.exists(vsr_file):
         return False
@@ -62,6 +112,9 @@ def check_vsr_file(program_id):
 
 
 def main():
+    """
+    Loop over program IDs and fetch APT and VSR files.
+    """
     # Loop over the program IDs, fetching the APT and VSR files
     program_ids = [2734]
     for program_id in program_ids:

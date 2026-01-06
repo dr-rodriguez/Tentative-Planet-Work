@@ -7,7 +7,21 @@ NS = "{http://www.stsci.edu/JWST/APT}"
 
 
 def safe_find_text(element, tag):
-    """Safely find and return text content of an element, or None if not found."""
+    """
+    Safely find and return text content of an element, or None if not found.
+    
+    Parameters
+    ----------
+    element : xml.etree.ElementTree.Element
+        XML element to search within.
+    tag : str
+        Tag name to search for.
+    
+    Returns
+    -------
+    str or None
+        Text content of the element, or None if not found.
+    """
     found = element.find(tag)
     if found is not None and found.text is not None:
         return found.text.strip()
@@ -18,12 +32,17 @@ def extract_text_by_tag(element, tag_pattern):
     """
     Extract text from a child element whose tag contains the given pattern.
     
-    Args:
-        element: XML element to search within
-        tag_pattern: String pattern to match in tag names
-        
-    Returns:
-        Text content of matching element, or None if not found
+    Parameters
+    ----------
+    element : xml.etree.ElementTree.Element
+        XML element to search within.
+    tag_pattern : str
+        String pattern to match in tag names.
+    
+    Returns
+    -------
+    str or None
+        Text content of matching element, or None if not found.
     """
     for child in element:
         if tag_pattern in child.tag and child.text is not None:
@@ -35,11 +54,15 @@ def extract_common_attributes(templ):
     """
     Extract common attributes (Subarray, ReadoutPattern, Groups) from template element.
     
-    Args:
-        templ: Template XML element
-        
-    Returns:
-        Dictionary with obs_subarray, obs_rop, obs_groups
+    Parameters
+    ----------
+    templ : xml.etree.ElementTree.Element
+        Template XML element.
+    
+    Returns
+    -------
+    dict
+        Dictionary with obs_subarray, obs_rop, obs_groups.
     """
     result = {
         "obs_subarray": None,
@@ -62,11 +85,15 @@ def extract_from_exposure(templ_attr):
     """
     Extract ReadoutPattern and Groups from nested Exposure element.
     
-    Args:
-        templ_attr: Exposure XML element
-        
-    Returns:
-        Dictionary with obs_rop and obs_groups
+    Parameters
+    ----------
+    templ_attr : xml.etree.ElementTree.Element
+        Exposure XML element.
+    
+    Returns
+    -------
+    dict
+        Dictionary with obs_rop and obs_groups.
     """
     result = {
         "obs_rop": None,
@@ -86,11 +113,15 @@ def parse_niriss_soss(templ):
     """
     Parse NIRISS SOSS template.
     
-    Args:
-        templ: Template XML element
-        
-    Returns:
-        Dictionary with obs_mode, obs_subarray, obs_rop, obs_groups, obs_opt_elem
+    Parameters
+    ----------
+    templ : xml.etree.ElementTree.Element
+        Template XML element.
+    
+    Returns
+    -------
+    dict
+        Dictionary with obs_mode, obs_subarray, obs_rop, obs_groups, obs_opt_elem.
     """
     result = {
         "obs_mode": "SOSS",
@@ -115,11 +146,15 @@ def parse_nircam_gts(templ):
     """
     Parse NIRCam Grism Time Series template.
     
-    Args:
-        templ: Template XML element
-        
-    Returns:
-        Dictionary with obs_mode, obs_subarray, obs_rop, obs_groups, obs_opt_elem
+    Parameters
+    ----------
+    templ : xml.etree.ElementTree.Element
+        Template XML element.
+    
+    Returns
+    -------
+    dict
+        Dictionary with obs_mode, obs_subarray, obs_rop, obs_groups, obs_opt_elem.
     """
     result = {
         "obs_mode": "GTS",
@@ -143,11 +178,15 @@ def parse_nirspec_bots(templ):
     """
     Parse NIRSpec Bright Object Time Series template.
     
-    Args:
-        templ: Template XML element
-        
-    Returns:
-        Dictionary with obs_mode, obs_subarray, obs_rop, obs_groups, obs_opt_elem
+    Parameters
+    ----------
+    templ : xml.etree.ElementTree.Element
+        Template XML element.
+    
+    Returns
+    -------
+    dict
+        Dictionary with obs_mode, obs_subarray, obs_rop, obs_groups, obs_opt_elem.
     """
     result = {
         "obs_mode": "BOTS",
@@ -171,11 +210,15 @@ def parse_miri_lrs(templ):
     """
     Parse MIRI LRS template.
     
-    Args:
-        templ: Template XML element
-        
-    Returns:
-        Dictionary with obs_mode, obs_subarray, obs_rop, obs_groups, obs_opt_elem
+    Parameters
+    ----------
+    templ : xml.etree.ElementTree.Element
+        Template XML element.
+    
+    Returns
+    -------
+    dict
+        Dictionary with obs_mode, obs_subarray, obs_rop, obs_groups, obs_opt_elem.
     """
     result = {
         "obs_mode": "LRS",
@@ -195,11 +238,15 @@ def parse_miri_imaging(templ):
     """
     Parse MIRI Imaging template.
     
-    Args:
-        templ: Template XML element
-        
-    Returns:
-        Dictionary with obs_mode, obs_subarray, obs_rop, obs_groups, obs_opt_elem
+    Parameters
+    ----------
+    templ : xml.etree.ElementTree.Element
+        Template XML element.
+    
+    Returns
+    -------
+    dict
+        Dictionary with obs_mode, obs_subarray, obs_rop, obs_groups, obs_opt_elem.
     """
     result = {
         "obs_mode": None,
@@ -230,11 +277,15 @@ def parse_miri_mrs(templ):
     """
     Parse MIRI MRS template.
     
-    Args:
-        templ: Template XML element
-        
-    Returns:
-        Dictionary with obs_mode, obs_subarray, obs_rop, obs_groups, obs_opt_elem
+    Parameters
+    ----------
+    templ : xml.etree.ElementTree.Element
+        Template XML element.
+    
+    Returns
+    -------
+    dict
+        Dictionary with obs_mode, obs_subarray, obs_rop, obs_groups, obs_opt_elem.
     """
     result = {
         "obs_mode": None,
@@ -272,16 +323,23 @@ TEMPLATE_PARSERS = {
 }
 
 
-def parse_targets(root, proposal_id):
+def parse_targets(root, proposal_id, target_name=None):
     """
     Parse Targets section from APT XML.
     
-    Args:
-        root: Root element of the XML tree
-        proposal_id: Proposal ID string
-        
-    Returns:
-        List of dictionaries containing target information
+    Parameters
+    ----------
+    root : xml.etree.ElementTree.Element
+        Root element of the XML tree.
+    proposal_id : str
+        Proposal ID string.
+    target_name : str, optional
+        Name of the target to get information for.
+    
+    Returns
+    -------
+    list of dict
+        List of dictionaries containing target information.
     """
     targets = []
     targets_node = root.find(f"{NS}Targets")
@@ -290,6 +348,11 @@ def parse_targets(root, proposal_id):
         return targets
     
     for target_element in targets_node.findall(f"{NS}Target"):
+        # Skip target if target_name is provided and does not match
+        if target_name is not None:
+            if safe_find_text(target_element, f"{NS}TargetName") != target_name:
+                continue
+        
         target_dict = {
             "ProposalID": proposal_id,
             "Number": safe_find_text(target_element, f"{NS}Number"),
@@ -321,16 +384,23 @@ def parse_targets(root, proposal_id):
     return targets
 
 
-def parse_data_requests(root, proposal_id):
+def parse_data_requests(root, proposal_id, target_name=None):
     """
     Parse DataRequests section from APT XML.
     
-    Args:
-        root: Root element of the XML tree
-        proposal_id: Proposal ID string
-        
-    Returns:
-        List of dictionaries containing observation information
+    Parameters
+    ----------
+    root : xml.etree.ElementTree.Element
+        Root element of the XML tree.
+    proposal_id : str
+        Proposal ID string.
+    target_name : str, optional
+        Name of the target to get information for.
+    
+    Returns
+    -------
+    list of dict
+        List of dictionaries containing observation information.
     """
     observations = []
     data_requests_node = root.find(f"{NS}DataRequests")
@@ -356,6 +426,11 @@ def parse_data_requests(root, proposal_id):
                 if ws_idx >= 1:
                     obs_target_id = obs_target[0:ws_idx]
                     obs_target = obs_target[ws_idx:].strip()
+
+            # Skip observation if target_name is provided and does not match
+            if target_name is not None:
+                if obs_target.strip() != target_name.strip():
+                    continue
             
             # Initialize observation mode and template-specific fields
             obs_mode = None
@@ -436,14 +511,20 @@ def parse_data_requests(root, proposal_id):
     return observations
 
 
-def parse_apt_file(file_path):
+def parse_apt_file(file_path, target_name=None):
     """
     Parse an APT XML file and extract proposal information.
     
-    Args:
-        file_path: Path to the APT XML file
-        
-    Returns:
+    Parameters
+    ----------
+    file_path : str
+        Path to the APT XML file.
+    target_name : str, optional
+        Name of the target to get information for.
+
+    Returns
+    -------
+    dict
         Dictionary containing proposal information fields. Missing fields are set to None.
     """
     tree = ET.parse(file_path)
@@ -497,14 +578,18 @@ def parse_apt_file(file_path):
     # Parse Targets section
     proposal_id = apt_dict["ProposalID"]
     if proposal_id:
-        apt_dict["Targets"] = parse_targets(root, proposal_id)
-        apt_dict["DataRequests"] = parse_data_requests(root, proposal_id)
+        apt_dict["Targets"] = parse_targets(root, proposal_id, target_name=target_name)
+        apt_dict["DataRequests"] = parse_data_requests(root, proposal_id, target_name=target_name)
     
     return apt_dict
 
+
 if __name__ == "__main__":
     file_path = "PPS/APT/2734_APT.xml"
-    apt_dict = parse_apt_file(file_path)
+    target_name = "WASP-96"  # optional target name, need to strip component letter if present
+    apt_dict = parse_apt_file(file_path, target_name=target_name)
+
+    # Pretty print the dictionary
     for key, value in apt_dict.items():
         if key in ["Targets", "DataRequests"]:
             print(f"{key}: {len(value)} entries")
