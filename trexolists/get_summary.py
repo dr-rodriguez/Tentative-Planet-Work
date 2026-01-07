@@ -220,11 +220,10 @@ def summary_info(apt_dict, target_name, planet_letter, vsr_dict=None):
     return result
 
 
-if __name__ == "__main__":
-    proposal_id = 2734
-    target_name = "WASP-96"
-    planet_letter = "b"
-
+def gather_summary_info(proposal_id, target_name, planet_letter):
+    """
+    Gather the summary information for a given proposal ID, target name, and planet letter.
+    """
     # Check if the APT and VSR files exist
     if not check_apt_file(proposal_id):
         download_apt(proposal_id)
@@ -236,7 +235,17 @@ if __name__ == "__main__":
     apt_dict = parse_apt_file(apt_file, target_name)
     vsr_dict = parse_vsr_file(vsr_file, target_name)
 
-    summary_info = summary_info(apt_dict, target_name, planet_letter, vsr_dict)
+    summary_dict = summary_info(apt_dict, target_name, planet_letter, vsr_dict)
+    return summary_dict
 
-    for key, value in summary_info.items():
+
+if __name__ == "__main__":
+    proposal_id = 2734
+    target_name = "WASP-96"
+    planet_letter = "b"
+
+    # Get all summary information
+    summary_dict = gather_summary_info(proposal_id, target_name, planet_letter)
+    
+    for key, value in summary_dict.items():
         print(f"{key}: {value}")
