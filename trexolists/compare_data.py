@@ -82,7 +82,7 @@ def compare_values(df, summary_dict):
         
         # Print the Observation value for this row
         row_observation = row_dict.get("Observation")
-        print(f"Processing Observation: {row_observation}")
+        # print(f"Processing Observation: {row_observation}")
 
         # Normalize row Observation for comparison
         row_obs_norm, row_obs_type = normalize_value(row_observation)
@@ -97,11 +97,13 @@ def compare_values(df, summary_dict):
             observation_matches = summary_obs_norm == row_obs_norm
 
         if not observation_matches:
-            print(
-                f"Skipping row with Observation={row_observation} "
-                f"(does not match summary_dict Observation={summary_dict.get('Observation')})"
-            )
+            # print(
+            #     f"Skipping row with Observation={row_observation} "
+            #     f"(does not match summary_dict Observation={summary_dict.get('Observation')})"
+            # )
             continue
+        else:
+            print(f"Processing Observation: {row_observation}")
 
         # Compare row against summary_dict, gather any differences and display them
         # Skip system, planet, star properties (sy_, pl_, st_)
@@ -163,7 +165,11 @@ if __name__ == "__main__":
     planet_letter = "e"
     proposal_id = 2084
 
-    summary_dict = gather_summary_info(proposal_id, target_name, planet_letter)
+    summary_list = gather_summary_info(proposal_id, target_name, planet_letter)
 
-    # Compare the values
-    compare_values(df, summary_dict)
+    if not summary_list:
+        print(f"No observations found for {target_name} {planet_letter} in proposal {proposal_id}")
+    else:
+        for i, summary_dict in enumerate(summary_list, 1):
+            print(f"\n=== Comparing Observation {summary_dict.get('Observation')} ({i}/{len(summary_list)}) ===")
+            compare_values(df, summary_dict)
