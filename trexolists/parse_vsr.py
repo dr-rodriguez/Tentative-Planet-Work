@@ -1,28 +1,7 @@
 # Script to parse the VSR xml file and save contents to a python dictionary
 
 import xml.etree.ElementTree as ET
-
-
-def safe_find_text(element, tag):
-    """
-    Safely find and return text content of an element, or None if not found.
-    
-    Parameters
-    ----------
-    element : xml.etree.ElementTree.Element
-        XML element to search within.
-    tag : str
-        Tag name to search for.
-    
-    Returns
-    -------
-    str or None
-        Text content of the element, or None if not found.
-    """
-    found = element.find(tag)
-    if found is not None and found.text is not None:
-        return found.text.strip()
-    return None
+from trexolists.utils import safe_find_text
 
 
 def parse_repeated_by(element):

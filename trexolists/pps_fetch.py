@@ -3,22 +3,11 @@
 import os
 import requests
 import shutil
+from trexolists.utils import check_directory
 
 # Define the base URL for the PPS data
 base_url = "https://www.stsci.edu/jwst/phase2-public/"
 work_dir = "."
-
-
-def check_directory(directory):
-    """
-    Create directory if it does not exist.
-    
-    Parameters
-    ----------
-    directory : str
-        Path to the directory to create.
-    """
-    os.makedirs(directory, exist_ok=True)
 
 
 def check_apt_file(program_id):
