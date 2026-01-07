@@ -21,7 +21,11 @@ def safe_find_text(element, tag):
     """
     found = element.find(tag)
     if found is not None and found.text is not None:
-        return found.text.strip()
+        text = found.text.strip()
+        # Treat "X" as equivalent to None (missing value)
+        if text.upper() == "X":
+            return None
+        return text
     return None
 
 
