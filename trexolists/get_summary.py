@@ -99,7 +99,8 @@ def summary_info(apt_dict, target_name, planet_letter, vsr_dict=None):
     """
     Extract summary information matching CSV column structure from data/03_trexolists_extended.csv.
 
-    Returns a dictionary with keys matching CSV column names:
+    Returns a list of dictionaries, one for each matching observation in DataRequests.
+    Each dictionary has keys matching CSV column names:
     hostname_nn, letter_nn, Event, ProposalCategory, ProposalID, Cycle, Observation, Status,
     ObservingMode, GratingGrism, Subarray, ReadoutPattern, Groups, StartTime, EndTime, Hours,
     LastName, ProprietaryPeriod, EquatorialCoordinates, sy_kmag, sy_dist, st_teff, st_mass,
@@ -107,7 +108,8 @@ def summary_info(apt_dict, target_name, planet_letter, vsr_dict=None):
     pl_Teq_K, pl_trandep, pl_trandur, pl_TSM_K, pl_ESM_3um, PlanWindow, st_met
     """
 
-    result = {
+    # Initialize base template with all fields set to None
+    base_template = {
         "hostname_nn": target_name,
         "letter_nn": planet_letter,
         "Event": None,
@@ -149,11 +151,13 @@ def summary_info(apt_dict, target_name, planet_letter, vsr_dict=None):
         "st_met": None,
     }
 
-    # Extract top-level fields
-    result["ProposalID"] = apt_dict.get("ProposalID")
-    result["ProposalCategory"] = apt_dict.get("ProposalCategory")
-    result["Cycle"] = apt_dict.get("Cycle")
-    result["LastName"] = apt_dict.get("LastName")
+    # Extract shared top-level fields
+    shared_fields = {
+        "ProposalID": apt_dict.get("ProposalID"),
+        "ProposalCategory": apt_dict.get("ProposalCategory"),
+        "Cycle": apt_dict.get("Cycle"),
+        "LastName": apt_dict.get("LastName"),
+    }
 
     # Extract numeric value from ProprietaryPeriod formatted string (e.g., "C[12 Months]" -> 12)
     proprietary_period = apt_dict.get("ProprietaryPeriod")
@@ -165,25 +169,53 @@ def summary_info(apt_dict, target_name, planet_letter, vsr_dict=None):
         try:
             # Extract number using str[2:-8] pattern (skip "C[" and " Months]")
             extracted_value = proprietary_period[2:-8]
-            result["ProprietaryPeriod"] = int(extracted_value)
+            shared_fields["ProprietaryPeriod"] = int(extracted_value)
         except (ValueError, IndexError):
             # Handle edge cases: keep original value if extraction fails
-            result["ProprietaryPeriod"] = proprietary_period
+            shared_fields["ProprietaryPeriod"] = proprietary_period
     else:
-        result["ProprietaryPeriod"] = proprietary_period
+        shared_fields["ProprietaryPeriod"] = proprietary_period
+
+    # Find matching target from Targets list (shared across all observations)
+    targets = apt_dict.get("Targets", [])
+    matching_target = None
+    for target in targets:
+        if target.get("TargetName") == target_name:
+            matching_target = target
+            break
+
+    if matching_target:
+        shared_fields["EquatorialCoordinates"] = matching_target.get("EquatorialCoordinates")
+    else:
+        shared_fields["EquatorialCoordinates"] = None
 
     # Find matching observations from DataRequests
     data_requests = apt_dict.get("DataRequests", [])
     matching_obs = [obs for obs in data_requests if obs.get("TargetID") == target_name]
 
-    if matching_obs:
-        # Use first matching observation
-        obs = matching_obs[0]
+    # If no matching observations, return empty list
+    if not matching_obs:
+        return []
+
+    # Prepare VSR visits lookup dictionary for efficient matching
+    vsr_visits_by_obs = {}
+    if vsr_dict:
+        visits = vsr_dict.get("Visits", [])
+        for visit in visits:
+            obs_num = visit.get("observation")
+            if obs_num:
+                vsr_visits_by_obs[str(obs_num)] = visit
+
+    # Create a result dictionary for each matching observation
+    results = []
+    for obs in matching_obs:
+        # Start with base template and shared fields
+        result = base_template.copy()
+        result.update(shared_fields)
+
+        # Add observation-specific fields
         result["Observation"] = obs.get("Obs_Number")
-
-        # Use only the ObservingMode abbreviation to match CSV format
         result["ObservingMode"] = obs.get("ObservingMode")
-
         result["Subarray"] = obs.get("Subarray")
         result["ReadoutPattern"] = obs.get("ReadoutPattern")
         result["Groups"] = obs.get("Groups")
@@ -194,53 +226,35 @@ def summary_info(apt_dict, target_name, planet_letter, vsr_dict=None):
         #     result["Event"] = "Transit"
 
         # Match VSR visit to this observation
-        if vsr_dict:
-            visits = vsr_dict.get("Visits", [])
-            obs_number = obs.get("Obs_Number")
-            if obs_number:
-                # Find matching visit by observation number
-                matching_visit = None
-                for visit in visits:
-                    if visit.get("observation") == str(obs_number):
-                        matching_visit = visit
-                        break
+        obs_number = obs.get("Obs_Number")
+        if obs_number and str(obs_number) in vsr_visits_by_obs:
+            matching_visit = vsr_visits_by_obs[str(obs_number)]
 
-                if matching_visit:
-                    # Extract Status
-                    result["Status"] = matching_visit.get("status")
+            # Extract Status
+            result["Status"] = matching_visit.get("status")
 
-                    # Extract Hours (convert to float if present)
-                    hours_str = matching_visit.get("hours")
-                    if hours_str:
-                        try:
-                            result["Hours"] = float(hours_str)
-                        except (ValueError, TypeError):
-                            result["Hours"] = None
+            # Extract Hours (convert to float if present)
+            hours_str = matching_visit.get("hours")
+            if hours_str:
+                try:
+                    result["Hours"] = float(hours_str)
+                except (ValueError, TypeError):
+                    result["Hours"] = None
 
-                    # Extract StartTime and EndTime in raw format
-                    result["StartTime"] = matching_visit.get("startTime")
-                    result["EndTime"] = matching_visit.get("endTime")
+            # Extract StartTime and EndTime in raw format
+            result["StartTime"] = matching_visit.get("startTime")
+            result["EndTime"] = matching_visit.get("endTime")
 
-                    # Extract PlanWindow (use "X" if None or empty)
-                    plan_window = matching_visit.get("planWindow")
-                    if plan_window:
-                        result["PlanWindow"] = plan_window
-                    else:
-                        result["PlanWindow"] = "X"
+            # Extract PlanWindow (use "X" if None or empty)
+            plan_window = matching_visit.get("planWindow")
+            if plan_window:
+                result["PlanWindow"] = plan_window
+            else:
+                result["PlanWindow"] = "X"
 
-    # Find matching target from Targets list
-    targets = apt_dict.get("Targets", [])
-    matching_target = None
-    for target in targets:
-        if target.get("TargetName") == target_name:
-            matching_target = target
-            break
+        results.append(result)
 
-    # Extract EquatorialCoordinates in raw format
-    if matching_target:
-        result["EquatorialCoordinates"] = matching_target.get("EquatorialCoordinates")
-
-    return result
+    return results
 
 
 def gather_summary_info(proposal_id, target_name, planet_letter):
@@ -273,8 +287,11 @@ if __name__ == "__main__":
     planet_letter = "e"
     proposal_id = 2084
 
-    # Get all summary information
-    summary_dict = gather_summary_info(proposal_id, target_name, planet_letter)
+    # Get all summary information (returns list of dictionaries)
+    summary_list = gather_summary_info(proposal_id, target_name, planet_letter)
 
-    for key, value in summary_dict.items():
-        print(f"{key}: {value}")
+    # Print each dictionary in the list
+    for i, summary_dict in enumerate(summary_list, 1):
+        print(f"\n--- Observation {i} ---")
+        for key, value in summary_dict.items():
+            print(f"{key}: {value}")
