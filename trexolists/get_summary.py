@@ -263,9 +263,15 @@ def gather_summary_info(proposal_id, target_name, planet_letter):
 
 
 if __name__ == "__main__":
-    proposal_id = 2734
-    target_name = "WASP-96"
-    planet_letter = "b"
+    # WASP-96 b
+    # proposal_id = 2734
+    # target_name = "WASP-96"
+    # planet_letter = "b"
+
+    # 55 Cnc e
+    target_name = "55 Cnc"
+    planet_letter = "e"
+    proposal_id = 2084
 
     # Get all summary information
     summary_dict = gather_summary_info(proposal_id, target_name, planet_letter)
