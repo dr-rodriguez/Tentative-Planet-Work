@@ -1,7 +1,7 @@
 # Script to parse the APT xml file and save contents to a python dictionary
 
 import xml.etree.ElementTree as ET
-from trexolists.utils import safe_find_text
+from trexolists.utils import safe_find_text, normalize_text
 
 # XML namespace for JWST APT files
 NS = "{http://www.stsci.edu/JWST/APT}"
@@ -434,11 +434,11 @@ def parse_data_requests(root, proposal_id, target_name=None):
                     # Parse template if a matching parser was found
                     if parser_func is not None:
                         result = parser_func(templ)
-                        obs_mode = result["obs_mode"]
-                        obs_subarray = result["obs_subarray"]
-                        obs_rop = result["obs_rop"]
-                        obs_groups = result["obs_groups"]
-                        obs_opt_elem = result["obs_opt_elem"]
+                        obs_mode = normalize_text(result["obs_mode"])
+                        obs_subarray = normalize_text(result["obs_subarray"])
+                        obs_rop = normalize_text(result["obs_rop"])
+                        obs_groups = normalize_text(result["obs_groups"])
+                        obs_opt_elem = normalize_text(result["obs_opt_elem"])
             
             # Extract ScienceDuration and CoordinatedParallel
             obs_sci_dur = safe_find_text(observation, f"{NS}ScienceDuration")

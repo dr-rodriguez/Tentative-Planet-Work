@@ -3,6 +3,33 @@
 import os
 
 
+def normalize_text(text):
+    """
+    Normalize text content by treating "X" (case-insensitive) as None.
+    
+    Parameters
+    ----------
+    text : str or None
+        Text value to normalize.
+    
+    Returns
+    -------
+    str or None
+        Normalized text content, or None if input is None or "X".
+    """
+    if text is None:
+        return None
+    
+    if isinstance(text, str):
+        text = text.strip()
+        # Treat "X" as equivalent to None (missing value)
+        if text.upper() == "X":
+            return None
+        return text
+    
+    return text
+
+
 def safe_find_text(element, tag):
     """
     Safely find and return text content of an element, or None if not found.
@@ -21,11 +48,7 @@ def safe_find_text(element, tag):
     """
     found = element.find(tag)
     if found is not None and found.text is not None:
-        text = found.text.strip()
-        # Treat "X" as equivalent to None (missing value)
-        if text.upper() == "X":
-            return None
-        return text
+        return normalize_text(found.text)
     return None
 
 

@@ -27,7 +27,7 @@ def normalize_value(value):
         # Try to convert string to numeric
         value_stripped = value.strip()
         # Only treat empty strings as None, preserve "X" and other values
-        if not value_stripped or value_stripped.upper() in ["NONE", "NULL"]:
+        if not value_stripped or value_stripped.upper() in ["NONE", "NULL", "X"]:
             return None, "none"
 
         # Try int first, then float
