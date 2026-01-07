@@ -72,6 +72,8 @@ def compare_values(df, summary_dict):
         )
         return
 
+    # TODO: Rework the logic so we loop over each matched row, using observation column to match against summary_dict
+
     # Extract first matching row and convert to dictionary
     row_dict = matching_rows.iloc[0].to_dict()
 
@@ -126,9 +128,14 @@ if __name__ == "__main__":
     # proposal_id = 2734
 
     # K2-34 b
-    target_name = "K2-34"
-    planet_letter = "b"
-    proposal_id = 1541
+    # target_name = "K2-34"
+    # planet_letter = "b"
+    # proposal_id = 1541
+
+    # 55 Cnc
+    target_name = "55 Cnc"
+    planet_letter = "e"
+    proposal_id = 2084
 
     summary_dict = gather_summary_info(proposal_id, target_name, planet_letter)
 
