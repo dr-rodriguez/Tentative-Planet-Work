@@ -83,100 +83,63 @@ def parse_vsr_date(date_string):
 
 def summary_info(apt_dict, target_name, planet_letter, vsr_dict=None):
     """
-
-    HTML columns that are being used:
-    <th>Star<br>name</th>
-    <th>Planet<br>letter</th>
-    <th>Event</th>
-    <th>Program</th>
-    <th>Cycle</th>
-    <th>Obs.</th>
-    <th>Visit status<sup>*</sup></th>
-    <th>Observing Mode</th>
-    <th>Subarray</th>
-    <th>Readout<br>pattern</th>
-    <th>Groups</th>
-    <th>Start UT<br>decimal</th>
-    <th>Start UT<br>YYYY-mm-dd--<br>hh:mm:ss</th>
-    <th>Hours</th>
-    <th>PI name</th>
-    <th>Propr.<br>Period,<br>mo</th>
-    <th>RA (2000)<br>hh:mm:ss</th>
-    <th>Dec (2000)<br>dd:mm:ss</th>
-    <th>Star<br>K<sub>mag</sub></th>
-    <th>d<sub>star</sub>,<br>parsec</th>
-    <th>Star<br>T<sub>eff</sub>,<br>K</th>
-    <th>Star<br>[Fe/H]</th>
-    <th>Star<br>logg,<br>cgs</th>
-    <th>Star<br>mass,<br>M<sub>Sun</sub></th>
-    <th>Star<br>radius,<br>R<sub>Sun</sub></th>
-    <th>Orbital<br>period,<br>day</th>
-    <th>Semi-<br>m. axis,<br>AU</th>
-    <th>Orbital<br>inclin.,<br>degree</th>
-    <th>Planet<br>mass,<br>M<sub>Jup</sub></th>
-    <th>Planet<br>radius,<br>R<sub>Jup</sub></th>
-    <th>Planet<br>gravity,</br>m/s<sup>2</sup></th>
-    <th>Planet<br>density,<br>g/cm<sup>3</sup></th>
-    <th>Planet<br>eq. temp.,<br>K</th>
-    <th>Transit<br>depth,<br>percent</th>
-    <th>Transit<br>duration,<br>hr</th>
-    <th>Planet<br>TSM<br> at 3 um</th>
-    <th>Planet<br>ESM<br> at 3 um</th>
-    <th>Plan window<sup>*</sup></th>
-
-    Values for WASP-96 b:
-    <tr><td>WASP-96</td><td>b</td><td>Transit</td><td><a href="https://www.stsci.edu/jwst-program-info/download/jwst/pdf/2734/">COM 2734</a></td><td>0</td><td>2</td><td>Archived</td><td>NIRISS SOSS</td><td>SUBSTRIP256</td><td>NISRAPID</td><td>14.0</td><td>2022.469</td><td>2022-06-21--02:41:18</td><td>7.51</td><td>Pontoppidan</td><td>12</td><td>00:04:11.1377</td><td>-47:21:38.32</td><td>10.914</td><td>352.46</td><td>5540.0</td><td>0.14</td><td>4.42</td><td>1.06</td><td>1.05</td><td>3.4252567</td><td>0.045</td><td>85.6</td><td>0.48</td><td>1.23</td><td>8.99</td><td>0.39</td><td>1285.4</td><td>1.4</td><td>2.4</td><td>123.64</td><td>17.11</td><td>X</td></tr>
+    Extract summary information matching CSV column structure from data/03_trexolists_extended.csv.
+    
+    Returns a dictionary with keys matching CSV column names:
+    hostname_nn, letter_nn, Event, ProposalCategory, ProposalID, Cycle, Observation, Status,
+    ObservingMode, GratingGrism, Subarray, ReadoutPattern, Groups, StartTime, EndTime, Hours,
+    LastName, ProprietaryPeriod, EquatorialCoordinates, sy_kmag, sy_dist, st_teff, st_mass,
+    st_rad, st_logg, pl_orbper, pl_orbsmax, pl_orbincl, pl_massj, pl_radj, pl_g_SI, pl_dens_cgs,
+    pl_Teq_K, pl_trandep, pl_trandur, pl_TSM_K, pl_ESM_3um, PlanWindow, st_met
     """
 
     result = {
-        "StarName": target_name,
-        "PlanetLetter": planet_letter,
+        "hostname_nn": target_name,
+        "letter_nn": planet_letter,
         "Event": None,
-        "Program": None,
+        "ProposalCategory": None,
+        "ProposalID": None,
         "Cycle": None,
-        "Obs": None,
-        "VisitStatus": None,
+        "Observation": None,
+        "Status": None,
         "ObservingMode": None,
+        "GratingGrism": None,
         "Subarray": None,
         "ReadoutPattern": None,
         "Groups": None,
-        "StartUTDecimal": None,
-        "StartUTFormatted": None,
+        "StartTime": None,
+        "EndTime": None,
         "Hours": None,
-        "PIName": None,
+        "LastName": None,
         "ProprietaryPeriod": None,
-        "RA": None,
-        "Dec": None,
-        # "StarKmag": None,
-        # "StarDistance": None,
-        # "StarTeff": None,
-        # "StarFeH": None,
-        # "Starlogg": None,
-        # "StarMass": None,
-        # "StarRadius": None,
-        # "OrbitalPeriod": None,
-        # "SemiMajorAxis": None,
-        # "OrbitalInclination": None,
-        # "PlanetMass": None,
-        # "PlanetRadius": None,
-        # "PlanetGravity": None,
-        # "PlanetDensity": None,
-        # "PlanetEqTemp": None,
-        # "TransitDepth": None,
-        # "TransitDuration": None,
-        # "PlanetTSM": None,
-        # "PlanetESM": None,
+        "EquatorialCoordinates": None,
+        "sy_kmag": None,
+        "sy_dist": None,
+        "st_teff": None,
+        "st_mass": None,
+        "st_rad": None,
+        "st_logg": None,
+        "pl_orbper": None,
+        "pl_orbsmax": None,
+        "pl_orbincl": None,
+        "pl_massj": None,
+        "pl_radj": None,
+        "pl_g_SI": None,
+        "pl_dens_cgs": None,
+        "pl_Teq_K": None,
+        "pl_trandep": None,
+        "pl_trandur": None,
+        "pl_TSM_K": None,
+        "pl_ESM_3um": None,
         "PlanWindow": None,
+        "st_met": None,
     }
 
     # Extract top-level fields
-    if apt_dict.get("ProposalID"):
-        # TODO: Figure out how COM is set and what other values are possible
-        # result["Program"] = f"COM {apt_dict['ProposalID']}"
-        result["Program"] = apt_dict['ProposalID']
-
+    result["ProposalID"] = apt_dict.get("ProposalID")
+    result["ProposalCategory"] = apt_dict.get("ProposalCategory")
     result["Cycle"] = apt_dict.get("Cycle")
-    result["PIName"] = apt_dict.get("LastName")
+    result["LastName"] = apt_dict.get("LastName")
     result["ProprietaryPeriod"] = apt_dict.get("ProprietaryPeriod")
 
     # Find matching observations from DataRequests
@@ -186,7 +149,7 @@ def summary_info(apt_dict, target_name, planet_letter, vsr_dict=None):
     if matching_obs:
         # Use first matching observation
         obs = matching_obs[0]
-        result["Obs"] = obs.get("Obs_Number")
+        result["Observation"] = obs.get("Obs_Number")
         
         # Format observing mode: Instrument + " " + ObservingMode
         instrument = obs.get("Instrument")
@@ -201,6 +164,11 @@ def summary_info(apt_dict, target_name, planet_letter, vsr_dict=None):
         result["Subarray"] = obs.get("Subarray")
         result["ReadoutPattern"] = obs.get("ReadoutPattern")
         result["Groups"] = obs.get("Groups")
+        result["GratingGrism"] = obs.get("GratingGrism")
+        
+        # Determine Event field - set to "Transit" if TimeSeriesObservation is detected
+        # if obs.get("TimeSeriesObservation") == 1:
+        #     result["Event"] = "Transit"
         
         # Match VSR visit to this observation
         if vsr_dict:
@@ -215,8 +183,8 @@ def summary_info(apt_dict, target_name, planet_letter, vsr_dict=None):
                         break
                 
                 if matching_visit:
-                    # Extract VisitStatus
-                    result["VisitStatus"] = matching_visit.get("status")
+                    # Extract Status
+                    result["Status"] = matching_visit.get("status")
                     
                     # Extract Hours (convert to float if present)
                     hours_str = matching_visit.get("hours")
@@ -226,12 +194,9 @@ def summary_info(apt_dict, target_name, planet_letter, vsr_dict=None):
                         except (ValueError, TypeError):
                             result["Hours"] = None
                     
-                    # Extract and convert startTime
-                    start_time = matching_visit.get("startTime")
-                    if start_time:
-                        decimal_year, formatted_string = parse_vsr_date(start_time)
-                        result["StartUTDecimal"] = decimal_year
-                        result["StartUTFormatted"] = formatted_string
+                    # Extract StartTime and EndTime in raw format
+                    result["StartTime"] = matching_visit.get("startTime")
+                    result["EndTime"] = matching_visit.get("endTime")
                     
                     # Extract PlanWindow (use "X" if None or empty)
                     plan_window = matching_visit.get("planWindow")
@@ -248,23 +213,9 @@ def summary_info(apt_dict, target_name, planet_letter, vsr_dict=None):
             matching_target = target
             break
     
-    # NOTE: This would be replaced in the final version with info from nexsci
+    # Extract EquatorialCoordinates in raw format
     if matching_target:
-        # Parse EquatorialCoordinates Value attribute
-        # Format: "00 04 11.1377 -47 21 38.32" -> RA: "00:04:11.1377", Dec: "-47:21:38.32"
-        eq_coords = matching_target.get("EquatorialCoordinates")
-        if eq_coords:
-            parts = eq_coords.split()
-            if len(parts) >= 6:
-                ra_hh = parts[0]
-                ra_mm = parts[1]
-                ra_ss = parts[2]
-                dec_dd = parts[3]
-                dec_mm = parts[4]
-                dec_ss = parts[5]
-                
-                result["RA"] = f"{ra_hh}:{ra_mm}:{ra_ss}"
-                result["Dec"] = f"{dec_dd}:{dec_mm}:{dec_ss}"
+        result["EquatorialCoordinates"] = matching_target.get("EquatorialCoordinates")
 
     return result
 
