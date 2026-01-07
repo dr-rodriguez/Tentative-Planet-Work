@@ -4,7 +4,12 @@ import os
 from astropy.time import Time
 from trexolists.parse_apt import parse_apt_file
 from trexolists.parse_vsr import parse_vsr_file
-from trexolists.pps_fetch import download_apt, download_vsr, check_apt_file, check_vsr_file
+from trexolists.pps_fetch import (
+    download_apt,
+    download_vsr,
+    check_apt_file,
+    check_vsr_file,
+)
 
 # Defaults
 work_dir = "."
@@ -15,12 +20,12 @@ vsr_dir = os.path.join(work_dir, "PPS", "VSR")
 def parse_vsr_date(date_string):
     """
     Parse VSR date format and convert to decimal year and formatted string.
-    
+
     Parameters
     ----------
     date_string : str
         Date string in format "Jun 21, 2022 02:41:18"
-    
+
     Returns
     -------
     tuple
@@ -29,53 +34,62 @@ def parse_vsr_date(date_string):
     """
     if not date_string:
         return None, None
-    
+
     try:
         # Parse month name to number
         month_map = {
-            'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04',
-            'May': '05', 'Jun': '06', 'Jul': '07', 'Aug': '08',
-            'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'
+            "Jan": "01",
+            "Feb": "02",
+            "Mar": "03",
+            "Apr": "04",
+            "May": "05",
+            "Jun": "06",
+            "Jul": "07",
+            "Aug": "08",
+            "Sep": "09",
+            "Oct": "10",
+            "Nov": "11",
+            "Dec": "12",
         }
-        
+
         # Format: "Jun 21, 2022 02:41:18"
-        parts = date_string.split(',')
+        parts = date_string.split(",")
         if len(parts) < 2:
             return None, None
-        
+
         month_day = parts[0].strip()
         month_day_parts = month_day.split()
         if len(month_day_parts) < 2:
             return None, None
         month = month_day_parts[0]
         day = month_day_parts[1]
-        
+
         year_time = parts[1].strip()
         year_time_parts = year_time.split()
         if len(year_time_parts) < 2:
             return None, None
         year = year_time_parts[0]
         time = year_time_parts[1]
-        
+
         if not all([month, day, year, time]):
             return None, None
-        
+
         month_num = month_map.get(month)
         if not month_num:
             return None, None
-        
+
         # Format day with leading zero if needed
         day = day.zfill(2)
-        
+
         # Create ISO format string: "2022-06-21T02:41:18"
         iso_string = f"{year}-{month_num}-{day}T{time}"
-        
+
         # Calculate decimal year
-        decimal_year = round(Time(iso_string, format='isot').decimalyear, 3)
-        
+        decimal_year = round(Time(iso_string, format="isot").decimalyear, 3)
+
         # Create formatted string: "2022-06-21--02:41:18"
         formatted_string = f"{year}-{month_num}-{day}--{time}"
-        
+
         return decimal_year, formatted_string
     except Exception:
         return None, None
@@ -84,7 +98,7 @@ def parse_vsr_date(date_string):
 def summary_info(apt_dict, target_name, planet_letter, vsr_dict=None):
     """
     Extract summary information matching CSV column structure from data/03_trexolists_extended.csv.
-    
+
     Returns a dictionary with keys matching CSV column names:
     hostname_nn, letter_nn, Event, ProposalCategory, ProposalID, Cycle, Observation, Status,
     ObservingMode, GratingGrism, Subarray, ReadoutPattern, Groups, StartTime, EndTime, Hours,
@@ -140,10 +154,14 @@ def summary_info(apt_dict, target_name, planet_letter, vsr_dict=None):
     result["ProposalCategory"] = apt_dict.get("ProposalCategory")
     result["Cycle"] = apt_dict.get("Cycle")
     result["LastName"] = apt_dict.get("LastName")
-    
+
     # Extract numeric value from ProprietaryPeriod formatted string (e.g., "C[12 Months]" -> 12)
     proprietary_period = apt_dict.get("ProprietaryPeriod")
-    if proprietary_period and isinstance(proprietary_period, str) and len(proprietary_period) > 10:
+    if (
+        proprietary_period
+        and isinstance(proprietary_period, str)
+        and len(proprietary_period) > 10
+    ):
         try:
             # Extract number using str[2:-8] pattern (skip "C[" and " Months]")
             extracted_value = proprietary_period[2:-8]
@@ -157,24 +175,24 @@ def summary_info(apt_dict, target_name, planet_letter, vsr_dict=None):
     # Find matching observations from DataRequests
     data_requests = apt_dict.get("DataRequests", [])
     matching_obs = [obs for obs in data_requests if obs.get("TargetID") == target_name]
-    
+
     if matching_obs:
         # Use first matching observation
         obs = matching_obs[0]
         result["Observation"] = obs.get("Obs_Number")
-        
+
         # Use only the ObservingMode abbreviation to match CSV format
         result["ObservingMode"] = obs.get("ObservingMode")
-        
+
         result["Subarray"] = obs.get("Subarray")
         result["ReadoutPattern"] = obs.get("ReadoutPattern")
         result["Groups"] = obs.get("Groups")
         result["GratingGrism"] = obs.get("GratingGrism")
-        
+
         # Determine Event field - set to "Transit" if TimeSeriesObservation is detected
         # if obs.get("TimeSeriesObservation") == 1:
         #     result["Event"] = "Transit"
-        
+
         # Match VSR visit to this observation
         if vsr_dict:
             visits = vsr_dict.get("Visits", [])
@@ -186,11 +204,11 @@ def summary_info(apt_dict, target_name, planet_letter, vsr_dict=None):
                     if visit.get("observation") == str(obs_number):
                         matching_visit = visit
                         break
-                
+
                 if matching_visit:
                     # Extract Status
                     result["Status"] = matching_visit.get("status")
-                    
+
                     # Extract Hours (convert to float if present)
                     hours_str = matching_visit.get("hours")
                     if hours_str:
@@ -198,11 +216,11 @@ def summary_info(apt_dict, target_name, planet_letter, vsr_dict=None):
                             result["Hours"] = float(hours_str)
                         except (ValueError, TypeError):
                             result["Hours"] = None
-                    
+
                     # Extract StartTime and EndTime in raw format
                     result["StartTime"] = matching_visit.get("startTime")
                     result["EndTime"] = matching_visit.get("endTime")
-                    
+
                     # Extract PlanWindow (use "X" if None or empty)
                     plan_window = matching_visit.get("planWindow")
                     if plan_window:
@@ -217,7 +235,7 @@ def summary_info(apt_dict, target_name, planet_letter, vsr_dict=None):
         if target.get("TargetName") == target_name:
             matching_target = target
             break
-    
+
     # Extract EquatorialCoordinates in raw format
     if matching_target:
         result["EquatorialCoordinates"] = matching_target.get("EquatorialCoordinates")
@@ -251,6 +269,6 @@ if __name__ == "__main__":
 
     # Get all summary information
     summary_dict = gather_summary_info(proposal_id, target_name, planet_letter)
-    
+
     for key, value in summary_dict.items():
         print(f"{key}: {value}")

@@ -6,14 +6,14 @@ import os
 def safe_find_text(element, tag):
     """
     Safely find and return text content of an element, or None if not found.
-    
+
     Parameters
     ----------
     element : xml.etree.ElementTree.Element
         XML element to search within.
     tag : str
         Tag name to search for.
-    
+
     Returns
     -------
     str or None
@@ -28,7 +28,7 @@ def safe_find_text(element, tag):
 def check_directory(directory):
     """
     Create directory if it does not exist.
-    
+
     Parameters
     ----------
     directory : str

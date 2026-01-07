@@ -13,12 +13,12 @@ work_dir = "."
 def check_apt_file(program_id):
     """
     Check if APT file exists for the given program ID.
-    
+
     Parameters
     ----------
     program_id : int
         Program ID to check.
-    
+
     Returns
     -------
     bool
@@ -33,7 +33,7 @@ def check_apt_file(program_id):
 def download_apt(program_id):
     """
     Download and extract APT file for the given program ID.
-    
+
     Parameters
     ----------
     program_id : int
@@ -45,14 +45,19 @@ def download_apt(program_id):
         # Download the zip file
         with open(f"{work_dir}/PPS/APT/{program_id}_APT.zip", "wb") as f:
             f.write(response.content)
-        
+
         # Unpack the zip file
-        shutil.unpack_archive(f"{work_dir}/PPS/APT/{program_id}_APT.zip", f"{work_dir}/PPS/APT")
+        shutil.unpack_archive(
+            f"{work_dir}/PPS/APT/{program_id}_APT.zip", f"{work_dir}/PPS/APT"
+        )
         os.remove(f"{work_dir}/PPS/APT/{program_id}_APT.zip")
 
         # Rename the xml file
-        os.rename(f"{work_dir}/PPS/APT/{program_id}.xml", f"{work_dir}/PPS/APT/{program_id}_APT.xml")
-        
+        os.rename(
+            f"{work_dir}/PPS/APT/{program_id}.xml",
+            f"{work_dir}/PPS/APT/{program_id}_APT.xml",
+        )
+
         # Remove manifest file
         os.remove(f"{work_dir}/PPS/APT/manifest")
 
@@ -64,7 +69,7 @@ def download_apt(program_id):
 def download_vsr(program_id):
     """
     Download VSR file for the given program ID.
-    
+
     Parameters
     ----------
     program_id : int
@@ -83,12 +88,12 @@ def download_vsr(program_id):
 def check_vsr_file(program_id):
     """
     Check if VSR file exists for the given program ID.
-    
+
     Parameters
     ----------
     program_id : int
         Program ID to check.
-    
+
     Returns
     -------
     bool
@@ -116,6 +121,7 @@ def main():
             download_vsr(program_id)
         else:
             print(f"VSR file for {program_id} already exists")
+
 
 if __name__ == "__main__":
     # Make sure the work directory exists
