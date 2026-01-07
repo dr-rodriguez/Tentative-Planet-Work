@@ -151,15 +151,8 @@ def summary_info(apt_dict, target_name, planet_letter, vsr_dict=None):
         obs = matching_obs[0]
         result["Observation"] = obs.get("Obs_Number")
         
-        # Format observing mode: Instrument + " " + ObservingMode
-        instrument = obs.get("Instrument")
-        obs_mode = obs.get("ObservingMode")
-        if instrument and obs_mode:
-            result["ObservingMode"] = f"{instrument} {obs_mode}"
-        elif instrument:
-            result["ObservingMode"] = instrument
-        elif obs_mode:
-            result["ObservingMode"] = obs_mode
+        # Use only the ObservingMode abbreviation to match CSV format
+        result["ObservingMode"] = obs.get("ObservingMode")
         
         result["Subarray"] = obs.get("Subarray")
         result["ReadoutPattern"] = obs.get("ReadoutPattern")
