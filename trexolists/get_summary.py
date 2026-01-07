@@ -140,7 +140,19 @@ def summary_info(apt_dict, target_name, planet_letter, vsr_dict=None):
     result["ProposalCategory"] = apt_dict.get("ProposalCategory")
     result["Cycle"] = apt_dict.get("Cycle")
     result["LastName"] = apt_dict.get("LastName")
-    result["ProprietaryPeriod"] = apt_dict.get("ProprietaryPeriod")
+    
+    # Extract numeric value from ProprietaryPeriod formatted string (e.g., "C[12 Months]" -> 12)
+    proprietary_period = apt_dict.get("ProprietaryPeriod")
+    if proprietary_period and isinstance(proprietary_period, str) and len(proprietary_period) > 10:
+        try:
+            # Extract number using str[2:-8] pattern (skip "C[" and " Months]")
+            extracted_value = proprietary_period[2:-8]
+            result["ProprietaryPeriod"] = int(extracted_value)
+        except (ValueError, IndexError):
+            # Handle edge cases: keep original value if extraction fails
+            result["ProprietaryPeriod"] = proprietary_period
+    else:
+        result["ProprietaryPeriod"] = proprietary_period
 
     # Find matching observations from DataRequests
     data_requests = apt_dict.get("DataRequests", [])
