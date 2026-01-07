@@ -10,6 +10,7 @@ from trexolists.pps_fetch import (
     check_apt_file,
     check_vsr_file,
 )
+from trexolists.utils import remove_all_whitespace
 
 # Defaults
 work_dir = "."
@@ -191,7 +192,7 @@ def summary_info(apt_dict, target_name, planet_letter, vsr_dict=None):
 
     # Find matching observations from DataRequests
     data_requests = apt_dict.get("DataRequests", [])
-    matching_obs = [obs for obs in data_requests if obs.get("TargetID") == target_name]
+    matching_obs = [obs for obs in data_requests if remove_all_whitespace(obs.get("TargetID")) == remove_all_whitespace(target_name)]
 
     # If no matching observations, return empty list
     if not matching_obs:
