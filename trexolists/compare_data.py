@@ -11,9 +11,19 @@ def read_data(file_path):
 
 def compare_values(df, summary_dict):
     # Get the corresponding row in the dataframe
+    # Convert ProposalID to same type for comparison (handle int/string mismatch)
+    proposal_id = summary_dict['ProposalID']
+    if proposal_id is not None:
+        # Try to convert to int if it's a string
+        if isinstance(proposal_id, str):
+            try:
+                proposal_id = int(proposal_id)
+            except (ValueError, TypeError):
+                pass
+    
     mask = ((df['hostname_nn'] == summary_dict['hostname_nn']) &
             (df['letter_nn'] == summary_dict['letter_nn']) &
-            (df['ProposalID'] == summary_dict['ProposalID']))
+            (df['ProposalID'] == proposal_id))
     
     matching_rows = df[mask]
     
