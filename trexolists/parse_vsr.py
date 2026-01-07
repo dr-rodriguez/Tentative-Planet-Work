@@ -1,7 +1,7 @@
 # Script to parse the VSR xml file and save contents to a python dictionary
 
 import xml.etree.ElementTree as ET
-from trexolists.utils import safe_find_text
+from trexolists.utils import safe_find_text, remove_all_whitespace
 
 
 def parse_repeated_by(element):
@@ -95,7 +95,7 @@ def parse_visits(root, target_name=None):
 
         # Skip visit if target_name is provided and does not match
         if target_name is not None:
-            if visit_target is None or visit_target.strip() != target_name.strip():
+            if visit_target is None or remove_all_whitespace(visit_target) != remove_all_whitespace(target_name):
                 continue
 
         visit_dict = {
@@ -161,8 +161,14 @@ def parse_vsr_file(file_path, target_name=None):
 
 
 if __name__ == "__main__":
+    # WASP-96 b
     file_path = "PPS/VSR/2734_VSR.xml"
     target_name = "WASP-96"
+
+    # 55 Cnc e
+    file_path = "PPS/VSR/2084_VSR.xml"
+    target_name = "55 Cnc"
+
     vsr_dict = parse_vsr_file(file_path, target_name=target_name)
 
     # Pretty print the dictionary

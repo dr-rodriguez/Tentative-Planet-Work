@@ -52,6 +52,30 @@ def safe_find_text(element, tag):
     return None
 
 
+def remove_all_whitespace(text):
+    """
+    Remove all whitespace characters from a string and convert to uppercase.
+    
+    Parameters
+    ----------
+    text : str or None
+        Text value to normalize.
+    
+    Returns
+    -------
+    str or None
+        Text with all whitespace removed and converted to uppercase, or None if input is None.
+    """
+    if text is None:
+        return None
+    
+    if isinstance(text, str):
+        # Remove all whitespace characters and convert to uppercase
+        return ''.join(text.split()).upper()
+    
+    return text
+
+
 def check_directory(directory):
     """
     Create directory if it does not exist.

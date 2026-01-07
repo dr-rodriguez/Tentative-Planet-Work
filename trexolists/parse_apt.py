@@ -1,7 +1,7 @@
 # Script to parse the APT xml file and save contents to a python dictionary
 
 import xml.etree.ElementTree as ET
-from trexolists.utils import safe_find_text, normalize_text
+from trexolists.utils import safe_find_text, normalize_text, remove_all_whitespace
 
 # XML namespace for JWST APT files
 NS = "{http://www.stsci.edu/JWST/APT}"
@@ -329,7 +329,8 @@ def parse_targets(root, proposal_id, target_name=None):
     for target_element in targets_node.findall(f"{NS}Target"):
         # Skip target if target_name is provided and does not match
         if target_name is not None:
-            if safe_find_text(target_element, f"{NS}TargetName") != target_name:
+            target_name_extracted = safe_find_text(target_element, f"{NS}TargetName")
+            if remove_all_whitespace(target_name_extracted) != remove_all_whitespace(target_name):
                 continue
         
         target_dict = {
@@ -408,7 +409,7 @@ def parse_data_requests(root, proposal_id, target_name=None):
 
             # Skip observation if target_name is provided and does not match
             if target_name is not None:
-                if obs_target.strip() != target_name.strip():
+                if remove_all_whitespace(obs_target) != remove_all_whitespace(target_name):
                     continue
             
             # Initialize observation mode and template-specific fields
@@ -564,8 +565,14 @@ def parse_apt_file(file_path, target_name=None):
 
 
 if __name__ == "__main__":
+    # WASP-96 b
     file_path = "PPS/APT/2734_APT.xml"
     target_name = "WASP-96"  # optional target name, need to strip component letter if present
+    
+    # 55 Cnc e
+    file_path = "PPS/APT/2084_APT.xml"
+    target_name = "55 Cnc"
+    
     apt_dict = parse_apt_file(file_path, target_name=target_name)
 
     # Pretty print the dictionary
