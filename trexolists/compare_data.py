@@ -9,6 +9,42 @@ def read_data(file_path):
     return df
 
 
+def normalize_value(value):
+    """
+    Normalize a value to a standard type for comparison.
+    Returns a tuple of (normalized_value, type_category) where type_category is 'numeric', 'string', or 'none'.
+    """
+    # Handle None/NaN
+    if value is None or pd.isna(value):
+        return None, 'none'
+    
+    # Try to convert to numeric (int or float)
+    if isinstance(value, (int, float)):
+        # Convert int to float for consistent numeric comparison
+        return float(value), 'numeric'
+    
+    if isinstance(value, str):
+        # Try to convert string to numeric
+        value_stripped = value.strip()
+        # Only treat empty strings as None, preserve "X" and other values
+        if not value_stripped or value_stripped.upper() in ['NONE', 'NULL']:
+            return None, 'none'
+        
+        # Try int first, then float
+        try:
+            # Check if it's an integer (no decimal point)
+            if '.' not in value_stripped and 'e' not in value_stripped.lower():
+                return int(value_stripped), 'numeric'
+            else:
+                return float(value_stripped), 'numeric'
+        except (ValueError, TypeError):
+            # Not numeric, return as string
+            return str(value), 'string'
+    
+    # For other types, convert to string
+    return str(value), 'string'
+
+
 def compare_values(df, summary_dict):
     # Get the corresponding row in the dataframe
     # Convert ProposalID to same type for comparison (handle int/string mismatch)
@@ -48,19 +84,29 @@ def compare_values(df, summary_dict):
         
         row_value = row_dict[key]
         
-        # Handle NaN/None values properly
-        if pd.isna(row_value) and (value is None or pd.isna(value)):
-            continue  # Both are NaN/None, consider them equal
-        elif pd.isna(row_value) or (value is None or pd.isna(value)):
+        # Normalize both values
+        row_norm, row_type = normalize_value(row_value)
+        val_norm, val_type = normalize_value(value)
+        
+        # Handle None/NaN values
+        if row_type == 'none' and val_type == 'none':
+            continue  # Both are None/NaN, consider them equal
+        elif row_type == 'none' or val_type == 'none':
             print(f"Difference found in {key}: {row_value} != {value}")
             continue
         
-        # Compare values (handle type mismatches)
-        try:
-            if row_value != value:
+        # Compare normalized values
+        if row_type == 'numeric' and val_type == 'numeric':
+            # Numeric comparison with small tolerance for floating point
+            if abs(row_norm - val_norm) > 1e-9:
                 print(f"Difference found in {key}: {row_value} != {value}")
-        except (TypeError, ValueError) as e:
-            print(f"Error comparing {key}: {e} (row_value={row_value}, value={value})")
+        elif row_type == 'string' and val_type == 'string':
+            # String comparison
+            if row_norm != val_norm:
+                print(f"Difference found in {key}: {row_value} != {value}")
+        else:
+            # Type mismatch (numeric vs string) - these are likely real differences
+            print(f"Difference found in {key}: {row_value} != {value} (type mismatch: {row_type} vs {val_type})")
     return
 
 
