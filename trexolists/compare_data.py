@@ -162,10 +162,15 @@ if __name__ == "__main__":
     # planet_letter = "b"
     # proposal_id = 1541
 
-    # 55 Cnc e
-    target_name = "55 Cnc"
-    planet_letter = "e"
-    proposal_id = 2084
+    # 55 Cnc e (multiple observations)
+    # target_name = "55 Cnc"
+    # planet_letter = "e"
+    # proposal_id = 2084
+
+    # WASP-39 b
+    target_name = "WASP-39"
+    planet_letter = "b"
+    proposal_id = 2783
 
     summary_list = gather_summary_info(proposal_id, target_name, planet_letter)
 
