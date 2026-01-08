@@ -129,27 +129,27 @@ def summary_info(apt_dict, target_name, planet_letter, vsr_dict=None):
         "Hours": None,
         "LastName": None,
         "ProprietaryPeriod": None,
-        "EquatorialCoordinates": None,
-        "sy_kmag": None,
-        "sy_dist": None,
-        "st_teff": None,
-        "st_mass": None,
-        "st_rad": None,
-        "st_logg": None,
-        "pl_orbper": None,
-        "pl_orbsmax": None,
-        "pl_orbincl": None,
-        "pl_massj": None,
-        "pl_radj": None,
-        "pl_g_SI": None,
-        "pl_dens_cgs": None,
-        "pl_Teq_K": None,
-        "pl_trandep": None,
-        "pl_trandur": None,
-        "pl_TSM_K": None,
-        "pl_ESM_3um": None,
+        # "EquatorialCoordinates": None,
+        # "sy_kmag": None,
+        # "sy_dist": None,
+        # "st_teff": None,
+        # "st_mass": None,
+        # "st_rad": None,
+        # "st_logg": None,
+        # "pl_orbper": None,
+        # "pl_orbsmax": None,
+        # "pl_orbincl": None,
+        # "pl_massj": None,
+        # "pl_radj": None,
+        # "pl_g_SI": None,
+        # "pl_dens_cgs": None,
+        # "pl_Teq_K": None,
+        # "pl_trandep": None,
+        # "pl_trandur": None,
+        # "pl_TSM_K": None,
+        # "pl_ESM_3um": None,
         "PlanWindow": None,
-        "st_met": None,
+        # "st_met": None,
     }
 
     # Extract shared top-level fields
@@ -284,9 +284,15 @@ if __name__ == "__main__":
     # planet_letter = "b"
 
     # 55 Cnc e
-    target_name = "55 Cnc"
-    planet_letter = "e"
-    proposal_id = 2084
+    # target_name = "55 Cnc"
+    # planet_letter = "e"
+    # proposal_id = 2084
+
+    # WASP-39 b
+    target_name = "WASP-39"
+    planet_letter = "b"
+    # proposal_id = 2783  # DD
+    proposal_id = 1366  # ERS
 
     # Get all summary information (returns list of dictionaries)
     summary_list = gather_summary_info(proposal_id, target_name, planet_letter)
