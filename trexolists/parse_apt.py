@@ -7,6 +7,34 @@ from trexolists.utils import safe_find_text, normalize_text, remove_all_whitespa
 NS = "{http://www.stsci.edu/JWST/APT}"
 
 
+def is_groups_tag(tag):
+    """
+    Check if a tag is exactly 'Groups' (not 'AcqGroups' or 'VerificationGroups').
+    
+    Parameters
+    ----------
+    tag : str
+        XML tag name (may be namespaced like 'mlrs:Groups' or '{namespace}Groups').
+    
+    Returns
+    -------
+    bool
+        True if tag is exactly 'Groups', False otherwise.
+    """
+    # Handle namespaced tags (e.g., 'mlrs:Groups' or '{namespace}Groups')
+    # Get the local name (last part after '}' for expanded namespaces, or ':' for prefixed)
+    # Check for '}' first since expanded namespace format takes precedence
+    if '}' in tag:
+        local_name = tag.split('}')[-1]
+    elif ':' in tag:
+        local_name = tag.split(':')[-1]
+    else:
+        local_name = tag
+    
+    # Only match exactly 'Groups', not 'AcqGroups' or 'VerificationGroups'
+    return local_name == "Groups"
+
+
 def extract_text_by_tag(element, tag_pattern):
     """
     Extract text from a child element whose tag contains the given pattern.
@@ -54,7 +82,7 @@ def extract_common_attributes(templ):
             result["obs_subarray"] = templ_attr.text
         elif "ReadoutPattern" in templ_attr.tag:
             result["obs_rop"] = templ_attr.text
-        elif "Groups" in templ_attr.tag:
+        elif is_groups_tag(templ_attr.tag):
             result["obs_groups"] = templ_attr.text
     
     return result
@@ -82,7 +110,7 @@ def extract_from_exposure(templ_attr):
     for exp_child in templ_attr:
         if "ReadoutPattern" in exp_child.tag:
             result["obs_rop"] = exp_child.text
-        elif "Groups" in exp_child.tag:
+        elif is_groups_tag(exp_child.tag):
             result["obs_groups"] = exp_child.text
     
     return result
@@ -244,7 +272,7 @@ def parse_miri_imaging(templ):
                     for fc_child in filter_config:
                         if "ReadoutPattern" in fc_child.tag:
                             result["obs_rop"] = fc_child.text
-                        elif "Groups" in fc_child.tag:
+                        elif is_groups_tag(fc_child.tag):
                             result["obs_groups"] = fc_child.text
                         elif "Filter" in fc_child.tag:
                             result["obs_mode"] = fc_child.text
