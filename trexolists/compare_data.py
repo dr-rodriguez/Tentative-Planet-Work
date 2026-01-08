@@ -110,6 +110,8 @@ def compare_values(df, summary_dict):
         for key, value in summary_dict.items():
             if key.startswith("sy_") or key.startswith("pl_") or key.startswith("st_"):
                 continue
+            elif key == "EquatorialCoordinates":
+                continue
 
             # Skip if key doesn't exist in row_dict
             if key not in row_dict:
