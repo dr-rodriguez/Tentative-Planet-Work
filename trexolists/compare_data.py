@@ -170,7 +170,8 @@ if __name__ == "__main__":
     # WASP-39 b
     target_name = "WASP-39"
     planet_letter = "b"
-    proposal_id = 2783
+    # proposal_id = 2783  # DD
+    proposal_id = 1366  # ERS
 
     summary_list = gather_summary_info(proposal_id, target_name, planet_letter)
 
